@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: pg_isready -U app
+      interval: 2s
+      retries: 15
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/app
+    ports: ["3000:3000"]
+    volumes: [./backend:/app:z, /app/node_modules]
+    depends_on:
+      db: { condition: service_healthy }
+
+  frontend:
+    build: ./frontend
+    ports: ["5173:5173"]
+    volumes: [./frontend:/app:z, /app/node_modules]
+    depends_on: [backend]
+
+volumes:
+  pgdata:
