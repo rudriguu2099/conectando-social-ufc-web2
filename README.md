@@ -38,3 +38,17 @@ docker compose exec backend npm test
 ## Deploy
 
 - Lembrar de configurar o `trust proxy` no deploy (`backend/src/index.ts`): `app.set('trust proxy', 1)` se tiver um proxy reverso na frente. Sem isso o limite de login vê o IP do proxy em vez do usuário. Nunca usar `true`.
+
+## Lint e formatação (Biome)
+
+Rode uma vez na raiz do repositório para instalar o Biome e o hook de pre-commit:
+
+```sh
+npm install
+```
+
+A partir daí todo commit passa pelo Biome nos arquivos staged: formatação e imports são corrigidos automaticamente e erros de lint bloqueiam o commit.
+
+- `npm run check`: verifica tudo (lint + formatação + imports)
+- `npm run check:fix`: verifica e corrige o que for possível
+- `npm run lint` / `npm run format`: só lint / só formatação
