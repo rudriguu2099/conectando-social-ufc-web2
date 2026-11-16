@@ -53,7 +53,8 @@ export const authDocs = {
       post: {
         tags: ['Auth'],
         summary: 'Cria conta de aluno ou parceiro e já faz login',
-        description: 'Professores não se cadastram: a conta vem do seed.',
+        description:
+          'Já devolve a sessão (accessToken + cookie de refresh) para o front não precisar chamar o login logo depois do cadastro. Se um dia houver confirmação de e-mail, o signup passa a devolver só 201 e o login fica separado.\n\nProfessores não se cadastram: a conta vem do seed.',
         requestBody: {
           required: true,
           content: {
