@@ -1,13 +1,12 @@
 import { Prisma, type User } from '@prisma/client'
 import { prisma } from '../../lib/prisma.ts'
 import { HttpError } from '../../lib/http-error.ts'
-import { toPublicUser, type PublicUser } from '../users/users.service.ts'
 import type { SignupInput } from './auth.validation.ts'
 import { hashPassword, verifyPassword } from './password.ts'
 import { blockedFor, recordFailure, clearFailures } from './login-limiter.ts'
 import { REFRESH_TTL_MS, hashRefreshToken, newRefreshToken, signAccessToken } from './tokens.ts'
 
-export type Session = { accessToken: string; refreshToken: string; user: PublicUser }
+export type Session = { accessToken: string; refreshToken: string }
 
 const sessionExpired = () => new HttpError(401, 'Sessão expirada. Faça login de novo.')
 
@@ -17,7 +16,7 @@ async function createSession(user: User): Promise<Session> {
   await prisma.refreshToken.create({
     data: { hash: hashRefreshToken(refreshToken), userId: user.id, expiresAt: new Date(Date.now() + REFRESH_TTL_MS) },
   })
-  return { accessToken: await signAccessToken(user), refreshToken, user: toPublicUser(user) }
+  return { accessToken: await signAccessToken(user), refreshToken }
 }
 
 export async function signup({ password, data }: SignupInput) {

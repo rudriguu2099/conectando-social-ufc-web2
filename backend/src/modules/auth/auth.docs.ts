@@ -45,7 +45,7 @@ export const authDocs = {
     },
     Session: {
       type: 'object',
-      properties: { accessToken: { type: 'string', description: 'JWT, 15 min. Use no Authorize.' }, user: ref('User') },
+      properties: { accessToken: { type: 'string', description: 'JWT, 15 min. Use no Authorize. Dados do usuário: GET /api/users/me.' } },
     },
   },
   paths: {

@@ -44,14 +44,17 @@ test('signup validation', async () => {
 test('session flow: signup, me, roles, refresh rotation, logout', async () => {
   const signup = await post('/api/auth/signup', { role: 'STUDENT', name: 'Ana', email: studentEmail, password: 'senha1234', course: 'Design Digital' })
   assert.equal(signup.status, 201)
-  const { accessToken, user } = await signup.json()
-  assert.equal(user.passwordHash, undefined)
+  const body = await signup.json()
+  assert.deepEqual(Object.keys(body), ['accessToken'])
+  const { accessToken } = body
   assert.equal((await post('/api/auth/signup', { role: 'STUDENT', name: 'Ana', email: studentEmail, password: 'senha1234', course: 'Design Digital' })).status, 409)
 
   const auth = { authorization: `Bearer ${accessToken}` }
-  assert.equal((await (await fetch(base + '/api/users/me', { headers: auth })).json()).role, 'STUDENT')
+  const me = await (await fetch(base + '/api/users/me', { headers: auth })).json()
+  assert.equal(me.role, 'STUDENT')
+  assert.equal(me.passwordHash, undefined)
   assert.equal((await fetch(base + '/api/users/me')).status, 401)
-  const asStudent = { user: { id: user.id, role: 'STUDENT' } } as express.Request
+  const asStudent = { user: { id: me.id, role: 'STUDENT' } } as express.Request
   assert.throws(() => requireRole('PROFESSOR')(asStudent, {} as express.Response, () => {}), HttpError)
 
   const cookie = cookieOf(signup)
