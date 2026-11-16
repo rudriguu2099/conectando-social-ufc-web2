@@ -9,7 +9,7 @@ export function toPublicUser(user: User): PublicUser {
   return rest
 }
 
-export async function getById(id: number) {
+export async function getById(id: string) {
   const user = await prisma.user.findUnique({ where: { id } })
   if (!user) throw new HttpError(401, 'Faça login para continuar.')
   return toPublicUser(user)

@@ -11,10 +11,10 @@ function jwtSecret() {
   return new TextEncoder().encode(s)
 }
 
-export function signAccessToken(user: { id: number; role: Role }) {
+export function signAccessToken(user: { id: string; role: Role }) {
   return new SignJWT({ role: user.role })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(String(user.id))
+    .setSubject(user.id)
     .setIssuedAt()
     .setExpirationTime(ACCESS_TTL)
     .sign(jwtSecret())
@@ -22,7 +22,8 @@ export function signAccessToken(user: { id: number; role: Role }) {
 
 export async function verifyAccessToken(token: string) {
   const { payload } = await jwtVerify(token, jwtSecret(), { algorithms: ['HS256'] })
-  return { id: Number(payload.sub), role: payload.role as Role }
+  if (!payload.sub) throw new Error('token without sub')
+  return { id: payload.sub, role: payload.role as Role }
 }
 
 export const newRefreshToken = () => randomBytes(32).toString('base64url')

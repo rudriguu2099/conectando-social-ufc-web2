@@ -6,7 +6,7 @@ export const usersDocs = {
     User: {
       type: 'object',
       properties: {
-        id: { type: 'integer', example: 1 },
+        id: { type: 'string', format: 'uuid', example: '019a8f2e-7c41-7b3e-9d2a-5f6e8c1b4a30' },
         name: { type: 'string', example: 'Ana Ribeiro' },
         email: { type: 'string', format: 'email', example: 'ana.ribeiro@alu.ufc.br' },
         role: { type: 'string', enum: ['STUDENT', 'PARTNER', 'PROFESSOR'] },
