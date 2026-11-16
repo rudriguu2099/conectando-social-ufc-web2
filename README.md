@@ -11,6 +11,7 @@ Ou, com o front rodando fora do Docker: `./dev.sh`
 
 - Frontend (React + Vite): http://localhost:5173
 - Backend (Express + Prisma): http://localhost:3000/api/health
+- Swagger (fora de produção): http://localhost:3000/api/docs
 - Postgres: localhost:5432 (app/app)
 
 Nova migration depois de alterar `backend/prisma/schema.prisma`:
