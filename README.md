@@ -33,3 +33,7 @@ docker compose exec backend npm run seed                                # Prof. 
 docker compose exec backend npm run seed -- "Nome" email@ufc.br senha   # professor real
 docker compose exec backend npm test
 ```
+
+## Deploy
+
+- Lembrar de configurar o `trust proxy` no deploy (`backend/src/index.ts`): `app.set('trust proxy', 1)` se tiver um proxy reverso na frente. Sem isso o limite de login vê o IP do proxy em vez do usuário. Nunca usar `true`.
