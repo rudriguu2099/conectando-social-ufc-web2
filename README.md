@@ -3,6 +3,7 @@
 ## Pra rodar:
 
 ```sh
+cp backend/.env.example backend/.env   # só na primeira vez; troque o JWT_SECRET
 docker compose up --build
 ```
 
@@ -16,4 +17,19 @@ Nova migration depois de alterar `backend/prisma/schema.prisma`:
 
 ```sh
 docker compose exec backend npx prisma migrate dev --name <nome>
+```
+Depois de mudar dependências (`package.json`), suba com `-V` pra recriar o `node_modules` do container:
+
+```sh
+docker compose up --build -V
+```
+
+## Contas e testes
+
+Professores não se cadastram; a conta vem do seed:
+
+```sh
+docker compose exec backend npm run seed                                # Prof. Carla Mendes (carla@ufc.br / senha1234), só dev
+docker compose exec backend npm run seed -- "Nome" email@ufc.br senha   # professor real
+docker compose exec backend npm test
 ```

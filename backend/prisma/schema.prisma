@@ -7,9 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  STUDENT
+  PARTNER
+  PROFESSOR
+}
+
 model User {
+  id              Int            @id @default(autoincrement())
+  name            String
+  email           String         @unique
+  passwordHash    String
+  role            Role
+  course          String? // student, from COURSES
+  organization    String? // partner
+  partnerType     String? // partner, from PARTNER_TYPES
+  phone           String? // partner, optional
+  termsAcceptedAt DateTime? // partner, required on signup
+  createdAt       DateTime       @default(now())
+  refreshTokens   RefreshToken[]
+}
+
+model RefreshToken {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+  hash      String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
 }
