@@ -8,15 +8,19 @@ import { prisma } from '../../lib/prisma.ts'
 import { HttpError } from '../../lib/http-error.ts'
 import { requireRole } from './auth.middleware.ts'
 import { hashPassword, verifyPassword } from './password.ts'
+import { devOutbox } from '../../lib/mailer.ts'
+
+delete process.env.SMTP_HOST // never send real emails from tests
 
 const server = app.listen(0)
 const base = `http://localhost:${(server.address() as AddressInfo).port}`
 const run = Date.now()
 const studentEmail = `aluno.${run}@teste.com`
 const partnerEmail = `parceiro.${run}@teste.com`
+const resetEmail = `reset.${run}@teste.com`
 
 after(async () => {
-  await prisma.user.deleteMany({ where: { email: { in: [studentEmail, partnerEmail] } } })
+  await prisma.user.deleteMany({ where: { email: { in: [studentEmail, partnerEmail, resetEmail] } } })
   await prisma.$disconnect()
   server.close()
 })
@@ -71,4 +75,31 @@ test('login rate limit: 5 failures then 429, even with the right password', asyn
   for (let i = 0; i < 5; i++) assert.equal((await post('/api/auth/login', { email: partnerEmail, password: 'errada123' })).status, 401)
   assert.equal((await post('/api/auth/login', { email: partnerEmail, password: 'senha1234' })).status, 429)
   assert.equal((await post('/api/auth/login', { email: studentEmail, password: 'senha1234' })).status, 200, 'other emails unaffected')
+})
+
+test('password reset: generic response, cooldown, single use, ends sessions', async () => {
+  const signup = await post('/api/auth/signup', { role: 'STUDENT', name: 'Rita Reset', email: resetEmail, password: 'senha1234', course: 'Design Digital' })
+  const oldSession = cookieOf(signup)
+  const sent = devOutbox.length
+
+  assert.equal((await post('/api/auth/forgot-password', { email: 'invalido' })).status, 400)
+  assert.equal((await post('/api/auth/forgot-password', { email: `ninguem.${run}@teste.com` })).status, 204, 'same response without account')
+  assert.equal(devOutbox.length, sent)
+
+  assert.equal((await post('/api/auth/forgot-password', { email: resetEmail })).status, 204)
+  assert.equal(devOutbox.length, sent + 1)
+  const mail = devOutbox.at(-1)!
+  assert.equal(mail.to, resetEmail)
+  const token = mail.text.match(/#token=(\S+)/)![1]
+
+  assert.equal((await post('/api/auth/forgot-password', { email: resetEmail })).status, 204)
+  assert.equal(devOutbox.length, sent + 1, 'resend cooldown: no second email within 1 min')
+
+  assert.equal((await post('/api/auth/reset-password', { token, password: 'curta' })).status, 400)
+  assert.equal((await post('/api/auth/reset-password', { token, password: 'novasenha1' })).status, 204)
+  assert.equal((await post('/api/auth/reset-password', { token, password: 'outrasenha1' })).status, 400, 'link works once')
+
+  assert.equal((await post('/api/auth/refresh', {}, { cookie: oldSession })).status, 401, 'old sessions ended')
+  assert.equal((await post('/api/auth/login', { email: resetEmail, password: 'senha1234' })).status, 401)
+  assert.equal((await post('/api/auth/login', { email: resetEmail, password: 'novasenha1' })).status, 200)
 })

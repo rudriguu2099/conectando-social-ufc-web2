@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { HttpError } from '../../lib/http-error.ts'
 import * as authService from './auth.service.ts'
-import { parseLogin, parseSignup } from './auth.validation.ts'
+import { parseForgotPassword, parseLogin, parseResetPassword, parseSignup } from './auth.validation.ts'
 import { REFRESH_TTL_MS } from './tokens.ts'
 
 const REFRESH_COOKIE = 'refreshToken'
@@ -43,5 +43,16 @@ export async function refresh(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   await authService.logout(readRefreshCookie(req))
   res.clearCookie(REFRESH_COOKIE, cookieOptions)
+  res.status(204).end()
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  await authService.requestPasswordReset(parseForgotPassword(req.body ?? {}).email)
+  res.status(204).end()
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  const { token, password } = parseResetPassword(req.body ?? {})
+  await authService.resetPassword(token, password)
   res.status(204).end()
 }

@@ -80,7 +80,7 @@ export const authDocs = {
             },
           },
         },
-        responses: { 201: session, 400: error('Dados inválidos'), 409: error('E-mail já cadastrado') },
+        responses: { 201: session, 400: error('Dados inválidos'), 409: error('Não foi possível criar a conta com este e-mail') },
       },
     },
     '/api/auth/login': {
@@ -117,6 +117,35 @@ export const authDocs = {
         tags: ['Auth'],
         summary: 'Encerra a sessão e apaga o cookie',
         responses: { 204: { description: 'Sessão encerrada' } },
+      },
+    },
+    '/api/auth/forgot-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Pede o link para criar uma senha nova',
+        description:
+          'Responde 204 exista ou não uma conta com o e-mail, para não revelar quem está cadastrado. Se existir, envia um link que vale 1 hora e funciona uma vez; pedir de novo invalida o anterior. Pedidos com menos de 1 minuto de intervalo são ignorados (mesma resposta).',
+        requestBody: {
+          required: true,
+          content: json({ type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email', example: 'carla@ufc.br' } } }),
+        },
+        responses: { 204: { description: 'Pedido recebido' }, 400: error('E-mail inválido') },
+      },
+    },
+    '/api/auth/reset-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Cria a senha nova com o token do link',
+        description: 'O token vem no link do e-mail, depois de `#token=`. Ao trocar a senha, todas as sessões do usuário são encerradas.',
+        requestBody: {
+          required: true,
+          content: json({
+            type: 'object',
+            required: ['token', 'password'],
+            properties: { token: { type: 'string' }, password: { type: 'string', minLength: 8, maxLength: 128 } },
+          }),
+        },
+        responses: { 204: { description: 'Senha alterada' }, 400: error('Senha inválida, ou link inválido, vencido ou já usado') },
       },
     },
   },

@@ -26,7 +26,7 @@ export async function verifyAccessToken(token: string) {
   return { id: payload.sub, role: payload.role as Role }
 }
 
-export const newRefreshToken = () => randomBytes(32).toString('base64url')
+export const newToken = () => randomBytes(32).toString('base64url')
 
 // only the hash goes to the database
-export const hashRefreshToken = (token: string) => createHash('sha256').update(token).digest('hex')
+export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')

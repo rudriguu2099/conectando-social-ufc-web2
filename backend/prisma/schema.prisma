@@ -14,18 +14,19 @@ enum Role {
 }
 
 model User {
-  id              String         @id @default(uuid(7)) @db.Uuid
-  name            String
-  email           String         @unique
-  passwordHash    String
-  role            Role
-  course          String? // student, from COURSES
-  organization    String? // partner
-  partnerType     String? // partner, from PARTNER_TYPES
-  phone           String? // partner, optional
-  termsAcceptedAt DateTime? // partner, required on signup
-  createdAt       DateTime       @default(now())
-  refreshTokens   RefreshToken[]
+  id                 String              @id @default(uuid(7)) @db.Uuid
+  name               String
+  email              String              @unique
+  passwordHash       String
+  role               Role
+  course             String? // student, from COURSES
+  organization       String? // partner
+  partnerType        String? // partner, from PARTNER_TYPES
+  phone              String? // partner, optional
+  termsAcceptedAt    DateTime? // partner, required on signup
+  createdAt          DateTime            @default(now())
+  refreshTokens      RefreshToken[]
+  passwordResetToken PasswordResetToken?
 }
 
 model RefreshToken {
@@ -34,4 +35,13 @@ model RefreshToken {
   userId    String   @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @unique @db.Uuid // one active link per user
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now()) // resend cooldown
 }
