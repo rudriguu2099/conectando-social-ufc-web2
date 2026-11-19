@@ -14,8 +14,9 @@ services:
 
   backend:
     build: ./backend
+    env_file: ./backend/.env
     environment:
-      DATABASE_URL: postgresql://app:app@db:5432/app
+      DATABASE_URL: postgresql://app:app@db:5432/app # inside Docker the db host is "db"
     ports: ["3000:3000"]
     volumes: [./backend:/app:z, /app/node_modules]
     depends_on:

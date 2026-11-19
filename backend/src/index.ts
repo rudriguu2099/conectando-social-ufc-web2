@@ -1,8 +1,12 @@
 import express from 'express'
-import { PrismaClient } from '@prisma/client'
+import swaggerUi from 'swagger-ui-express'
+import { prisma } from './lib/prisma.ts'
+import { errorHandler } from './lib/http-error.ts'
+import { openApiSpec } from './lib/swagger.ts'
+import { authRoutes } from './modules/auth/auth.routes.ts'
+import { usersRoutes } from './modules/users/users.routes.ts'
 
-const prisma = new PrismaClient()
-const app = express()
+export const app = express()
 app.use(express.json())
 
 app.get('/api/health', async (req, res) => {
@@ -10,8 +14,15 @@ app.get('/api/health', async (req, res) => {
   res.json({ ok: true })
 })
 
-app.get('/api/users', async (req, res) => {
-  res.json(await prisma.user.findMany())
-})
+app.use('/api/auth', authRoutes)
+app.use('/api/users', usersRoutes)
 
-app.listen(3000, () => console.log('backend on :3000'))
+// docs
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/docs.json', (req, res) => res.json(openApiSpec))
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { swaggerOptions: { persistAuthorization: true } }))
+}
+
+app.use(errorHandler)
+
+if (import.meta.main) app.listen(3000, () => console.log('backend on :3000'))
