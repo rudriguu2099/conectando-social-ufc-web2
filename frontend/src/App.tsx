@@ -1,19 +1,19 @@
+import './index.css'
+import { Button } from "@/components/ui/button"
+
 import { useEffect, useState } from 'react'
 
 export default function App() {
-  const [status, setStatus] = useState<string>('...')
 
-  useEffect(() => {
-    fetch('/api/health')
-      .then((r) => r.json())
-      .then((d) => setStatus(d.ok ? 'ok' : 'erro'))
-      .catch(() => setStatus('erro'))
-  }, [])
+ 
 
   return (
-    <main>
-      <h1>Conectando Social UFC</h1>
-      <p>API: {status}</p>
+    <main className="flex min-h-screen flex-col items-center justify-between p-24 bg-gray-600">
+      ola 2
+
+      <div className="flex min-h-svh flex-col items-center justify-center">
+        <Button>Click me</Button>
+      </div>
     </main>
   )
 }
