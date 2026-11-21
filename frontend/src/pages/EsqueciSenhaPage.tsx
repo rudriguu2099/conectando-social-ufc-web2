@@ -1,15 +1,14 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import AuthField from '@/features/auth/components/AuthField'
 import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
+import AuthInput from '@/features/auth/components/AuthInput'
 
 export default function EsqueciSenhaPage() {
   const [notice, setNotice] = useState<string | null>(null)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function handleSubmit() {
     setNotice('A recuperação de senha ainda não está conectada ao backend.')
   }
 
@@ -24,16 +23,15 @@ export default function EsqueciSenhaPage() {
         </p>
       </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" action={handleSubmit}>
         <AuthField id="email" label="E-mail">
-          <Input
+          <AuthInput
             id="email"
             name="email"
             type="email"
             autoComplete="email"
             placeholder="seu.email@ufc.br"
             required
-            className="h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none focus-visible:border-sky-800 focus-visible:ring-sky-800/20"
           />
         </AuthField>
 

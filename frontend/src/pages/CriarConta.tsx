@@ -1,94 +1,44 @@
 
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import AuthField from '@/features/auth/components/AuthField'
-import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
+import FormAluno from '@/features/criarConta/aluno/FormAluno'
+import FormParceiro from '@/features/criarConta/parceiro/FormParceiro'
 
-function CriarConta() {
-  const [notice, setNotice] = useState<string | null>(null)
+type TipoConta = 'aluno' | 'parceiro'
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const formData = new FormData(event.currentTarget)
-    if (formData.get('password') !== formData.get('confirmPassword')) {
-      setNotice('As senhas informadas não coincidem.')
-      return
-    }
-
-    setNotice('A criação de conta ainda não está conectada ao backend.')
-  }
+export default function CriarConta() {
+  const [conta, setConta] = useState<TipoConta>('aluno')
 
   return (
-    <div className="space-y-5">
-      <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">Criar conta</h2>
-        <p className="text-sm text-neutral-500">
-          Preencha seus dados para se cadastrar.
-        </p>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold tracking-tight">Criar conta</h2>
+
+      <div className="grid grid-cols-2 border-b border-neutral-300">
+        <button
+          type="button"
+          onClick={() => setConta('aluno')}
+          className={
+            conta === 'aluno'
+              ? 'border-b-2 border-neutral-950 py-2.5 text-sm font-semibold text-neutral-950'
+              : 'py-2.5 text-sm text-neutral-600'
+          }
+        >
+          Sou aluno
+        </button>
+        <button
+          type="button"
+          onClick={() => setConta('parceiro')}
+          className={
+            conta === 'parceiro'
+              ? 'border-b-2 border-neutral-950 py-2.5 text-sm font-semibold text-neutral-950'
+              : 'py-2.5 text-sm text-neutral-600'
+          }
+        >
+          Sou parceiro
+        </button>
       </div>
 
-      <form className="space-y-3" onSubmit={handleSubmit}>
-        <AuthField id="name" label="Nome completo">
-          <Input
-            id="name"
-            name="name"
-            autoComplete="name"
-            placeholder="Seu nome"
-            required
-            className="h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none focus-visible:border-sky-800 focus-visible:ring-sky-800/20"
-          />
-        </AuthField>
-
-        <AuthField id="email" label="E-mail">
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="seu.email@ufc.br"
-            required
-            className="h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none focus-visible:border-sky-800 focus-visible:ring-sky-800/20"
-          />
-        </AuthField>
-
-        <AuthField id="password" label="Senha">
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            placeholder="Mínimo de 8 caracteres"
-            required
-            className="h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none focus-visible:border-sky-800 focus-visible:ring-sky-800/20"
-          />
-        </AuthField>
-
-        <AuthField id="confirmPassword" label="Confirmar senha">
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            minLength={8}
-            placeholder="Digite a senha novamente"
-            required
-            className="h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none focus-visible:border-sky-800 focus-visible:ring-sky-800/20"
-          />
-        </AuthField>
-
-        <Button
-          type="submit"
-          className="h-10 w-full rounded-sm bg-sky-800 text-sm font-medium text-white hover:bg-sky-900"
-        >
-          Criar conta
-        </Button>
-
-        {notice && <AuthFormNotice>{notice}</AuthFormNotice>}
-      </form>
+      {conta === 'aluno' ? <FormAluno /> : <FormParceiro />}
 
       <p className="text-center text-sm text-neutral-600">
         Já tem uma conta?{' '}
@@ -102,5 +52,3 @@ function CriarConta() {
     </div>
   )
 }
-
-export default CriarConta
