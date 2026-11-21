@@ -1,16 +1,19 @@
 import { createBrowserRouter } from 'react-router-dom'
-import AppLayout from '@/app/layouts/AppLayout'
-import HomePage from '@/pages/HomePage'
+import AuthLayout from '@/app/layouts/AuthLayout'
+import EntrarPage from '@/pages/EntrarPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import CriarConta from '@/pages/CriarConta'
+import EsqueciSenhaPage from '@/pages/EsqueciSenhaPage'
 
 export const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    path: '/',
+    element: <AuthLayout />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '*', element: <NotFoundPage /> },
-      { path: '/criar-conta', element: <CriarConta /> },
+      { index: true, element: <EntrarPage /> },
+      { path: 'criar-conta', element: <CriarConta /> },
+      { path: 'esqueci-senha', element: <EsqueciSenhaPage /> },
     ],
   },
+  { path: '*', element: <NotFoundPage /> },
 ])
