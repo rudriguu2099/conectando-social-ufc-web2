@@ -8,9 +8,9 @@ import AuthPasswordInput from '@/features/auth/components/AuthPasswordInput'
 import AuthSelect from '@/features/auth/components/AuthSelect'
 import {
   TIPOS_PARCEIRO,
-  useFormParceiro,
   type FormParceiroData,
-} from './useFormParceiro'
+} from './types'
+import { useFormParceiro } from './useFormParceiro'
 
 export default function FormParceiro() {
   const {

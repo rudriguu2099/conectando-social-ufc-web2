@@ -2,27 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { signup, getSignupErrorMessage } from '@/features/auth/auth.service'
-
-export const CURSOS = [
-  'Engenharia de Software',
-  'Design Digital',
-  'Ciência da Computação',
-  'Engenharia de Computação',
-  'Inteligência Artificial',
-  'Sistemas de Informação',
-  'Redes de Computadores',
-  'Cibersegurança',
-] as const
-
-export type Curso = (typeof CURSOS)[number]
-
-export interface FormAlunoData {
-  role: 'STUDENT'
-  name: string
-  email: string
-  password: string
-  course: Curso | ''
-}
+import { CURSOS, type FormAlunoData } from './types'
 
 const formAlunoSchema = z.object({
   role: z.literal('STUDENT'),

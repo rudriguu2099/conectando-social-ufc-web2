@@ -4,11 +4,8 @@ import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
 import AuthInput from '@/features/auth/components/AuthInput'
 import AuthPasswordInput from '@/features/auth/components/AuthPasswordInput'
 import AuthSelect from '@/features/auth/components/AuthSelect'
-import {
-  CURSOS,
-  useFormAluno,
-  type FormAlunoData,
-} from './useFormAluno'
+import { CURSOS, type FormAlunoData } from './types'
+import { useFormAluno } from './useFormAluno'
 
 export default function FormAluno() {
   const {

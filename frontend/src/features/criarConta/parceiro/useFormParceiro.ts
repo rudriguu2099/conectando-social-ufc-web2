@@ -2,32 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { signup, getSignupErrorMessage } from '@/features/auth/auth.service'
-
-export const TIPOS_PARCEIRO = [
-  'ONG',
-  'Associação',
-  'Coletivo',
-  'Cooperativa',
-  'Escola',
-  'Pequeno negócio',
-  'Empresa',
-  'Setor da UFC',
-  'Órgão público',
-  'Outro',
-] as const
-
-export type TipoParceiro = (typeof TIPOS_PARCEIRO)[number]
-
-export interface FormParceiroData {
-  role: 'PARTNER'
-  name: string
-  email: string
-  password: string
-  organization: string
-  partnerType: TipoParceiro | ''
-  phone: string
-  termsAccepted: boolean
-}
+import { TIPOS_PARCEIRO, type FormParceiroData } from './types'
 
 const formParceiroSchema = z.object({
   role: z.literal('PARTNER'),

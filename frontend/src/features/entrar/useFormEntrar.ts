@@ -4,31 +4,29 @@ import { z } from 'zod'
 import {
   getLoginErrorMessage,
   login,
-  type LoginPayload,
 } from '@/features/auth/auth.service'
-
-export interface FormEntrarData extends LoginPayload {}
+import type { LoginPayload } from '@/features/auth/types'
 
 const formEntrarSchema = z.object({
   email: z.email('Informe um e-mail válido.'),
   password: z.string().min(1, 'Informe sua senha.'),
 })
 
-const initialForm: FormEntrarData = {
+const initialForm: LoginPayload = {
   email: '',
   password: '',
 }
 
 export function useFormEntrar() {
   const navigate = useNavigate()
-  const [form, setForm] = useState<FormEntrarData>(initialForm)
+  const [form, setForm] = useState<LoginPayload>(initialForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  function updateField<K extends keyof FormEntrarData>(
+  function updateField<K extends keyof LoginPayload>(
     field: K,
-    value: FormEntrarData[K],
+    value: LoginPayload[K],
   ) {
     setForm((current) => ({ ...current, [field]: value }))
   }
