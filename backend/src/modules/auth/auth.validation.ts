@@ -8,7 +8,8 @@ const invalid = (message: string) => new HttpError(400, message)
 
 function parsePassword(v: unknown) {
   const password = typeof v === 'string' ? v : ''
-  if (password.length < 8 || password.length > 128) throw invalid('A senha precisa ter entre 8 e 128 caracteres.')
+  if (password.length < 8 || password.length > 128)
+    throw invalid('A senha precisa ter entre 8 e 128 caracteres.')
   return password
 }
 
@@ -40,7 +41,15 @@ export function parseSignup(b: Record<string, unknown>): SignupInput {
   if (b.termsAccepted !== true) throw invalid('É preciso aceitar o termo de ciência.')
   return {
     password,
-    data: { name, email, role: b.role, organization, partnerType, phone: text(b.phone) || null, termsAcceptedAt: new Date() },
+    data: {
+      name,
+      email,
+      role: b.role,
+      organization,
+      partnerType,
+      phone: text(b.phone) || null,
+      termsAcceptedAt: new Date(),
+    },
   }
 }
 

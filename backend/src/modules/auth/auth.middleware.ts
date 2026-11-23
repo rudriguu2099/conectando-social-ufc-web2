@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express'
 import type { Role } from '@prisma/client'
+import type { NextFunction, Request, Response } from 'express'
 import { HttpError } from '../../lib/http-error.ts'
 import { verifyAccessToken } from './tokens.ts'
 
@@ -17,6 +17,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
 export const requireRole =
   (...roles: Role[]) =>
   (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) throw new HttpError(403, 'Você não tem permissão para isso.')
+    if (!req.user || !roles.includes(req.user.role))
+      throw new HttpError(403, 'Você não tem permissão para isso.')
     next()
   }

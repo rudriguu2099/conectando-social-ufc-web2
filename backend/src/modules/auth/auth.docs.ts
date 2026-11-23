@@ -5,7 +5,8 @@ const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` })
 const error = (description: string) => ({ description, content: json(ref('Error')) })
 
 const session = {
-  description: 'Sessão criada. O refresh token vai no cookie httpOnly `refreshToken` (path /api/auth).',
+  description:
+    'Sessão criada. O refresh token vai no cookie httpOnly `refreshToken` (path /api/auth).',
   headers: { 'Set-Cookie': { schema: { type: 'string' } } },
   content: json(ref('Session')),
 }
@@ -26,7 +27,15 @@ export const authDocs = {
     },
     SignupPartner: {
       type: 'object',
-      required: ['role', 'name', 'email', 'password', 'organization', 'partnerType', 'termsAccepted'],
+      required: [
+        'role',
+        'name',
+        'email',
+        'password',
+        'organization',
+        'partnerType',
+        'termsAccepted',
+      ],
       properties: {
         role: { type: 'string', enum: ['PARTNER'] },
         name: { type: 'string' },
@@ -45,7 +54,12 @@ export const authDocs = {
     },
     Session: {
       type: 'object',
-      properties: { accessToken: { type: 'string', description: 'JWT, 15 min. Use no Authorize. Dados do usuário: GET /api/users/me.' } },
+      properties: {
+        accessToken: {
+          type: 'string',
+          description: 'JWT, 15 min. Use no Authorize. Dados do usuário: GET /api/users/me.',
+        },
+      },
     },
   },
   paths: {
@@ -59,10 +73,19 @@ export const authDocs = {
           required: true,
           content: {
             'application/json': {
-              schema: { oneOf: [ref('SignupStudent'), ref('SignupPartner')], discriminator: { propertyName: 'role' } },
+              schema: {
+                oneOf: [ref('SignupStudent'), ref('SignupPartner')],
+                discriminator: { propertyName: 'role' },
+              },
               examples: {
                 aluno: {
-                  value: { role: 'STUDENT', name: 'Ana Ribeiro', email: 'ana.ribeiro@alu.ufc.br', password: 'senha1234', course: 'Design Digital' },
+                  value: {
+                    role: 'STUDENT',
+                    name: 'Ana Ribeiro',
+                    email: 'ana.ribeiro@alu.ufc.br',
+                    password: 'senha1234',
+                    course: 'Design Digital',
+                  },
                 },
                 parceiro: {
                   value: {
@@ -80,7 +103,11 @@ export const authDocs = {
             },
           },
         },
-        responses: { 201: session, 400: error('Dados inválidos'), 409: error('Não foi possível criar a conta com este e-mail') },
+        responses: {
+          201: session,
+          400: error('Dados inválidos'),
+          409: error('Não foi possível criar a conta com este e-mail'),
+        },
       },
     },
     '/api/auth/login': {
@@ -100,7 +127,10 @@ export const authDocs = {
         responses: {
           200: session,
           401: error('E-mail ou senha incorretos'),
-          429: { ...error('Muitas tentativas'), headers: { 'Retry-After': { schema: { type: 'integer' }, description: 'segundos' } } },
+          429: {
+            ...error('Muitas tentativas'),
+            headers: { 'Retry-After': { schema: { type: 'integer' }, description: 'segundos' } },
+          },
         },
       },
     },
@@ -127,7 +157,11 @@ export const authDocs = {
           'Responde 204 exista ou não uma conta com o e-mail, para não revelar quem está cadastrado. Se existir, envia um link que vale 1 hora e funciona uma vez; pedir de novo invalida o anterior. Pedidos com menos de 1 minuto de intervalo são ignorados (mesma resposta).',
         requestBody: {
           required: true,
-          content: json({ type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email', example: 'carla@ufc.br' } } }),
+          content: json({
+            type: 'object',
+            required: ['email'],
+            properties: { email: { type: 'string', format: 'email', example: 'carla@ufc.br' } },
+          }),
         },
         responses: { 204: { description: 'Pedido recebido' }, 400: error('E-mail inválido') },
       },
@@ -136,16 +170,23 @@ export const authDocs = {
       post: {
         tags: ['Auth'],
         summary: 'Cria a senha nova com o token do link',
-        description: 'O token vem no link do e-mail, depois de `#token=`. Ao trocar a senha, todas as sessões do usuário são encerradas.',
+        description:
+          'O token vem no link do e-mail, depois de `#token=`. Ao trocar a senha, todas as sessões do usuário são encerradas.',
         requestBody: {
           required: true,
           content: json({
             type: 'object',
             required: ['token', 'password'],
-            properties: { token: { type: 'string' }, password: { type: 'string', minLength: 8, maxLength: 128 } },
+            properties: {
+              token: { type: 'string' },
+              password: { type: 'string', minLength: 8, maxLength: 128 },
+            },
           }),
         },
-        responses: { 204: { description: 'Senha alterada' }, 400: error('Senha inválida, ou link inválido, vencido ou já usado') },
+        responses: {
+          204: { description: 'Senha alterada' },
+          400: error('Senha inválida, ou link inválido, vencido ou já usado'),
+        },
       },
     },
   },

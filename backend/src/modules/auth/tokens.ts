@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { SignJWT, jwtVerify } from 'jose'
 import type { Role } from '@prisma/client'
+import { jwtVerify, SignJWT } from 'jose'
 
 const ACCESS_TTL = '15m'
 export const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000 // renewed on every refresh

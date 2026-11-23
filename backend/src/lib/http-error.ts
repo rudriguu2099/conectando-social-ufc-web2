@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express'
+import type { NextFunction, Request, Response } from 'express'
 
 export class HttpError extends Error {
   status: number
@@ -12,7 +12,8 @@ export class HttpError extends Error {
 }
 
 export function errorHandler(err: unknown, req: Request, res: Response, next: NextFunction) {
-  if (err instanceof HttpError) return res.status(err.status).set(err.headers).json({ error: err.message })
+  if (err instanceof HttpError)
+    return res.status(err.status).set(err.headers).json({ error: err.message })
   // for malformed JSON, payload too large
   const status = (err as { status?: number }).status
   if (status && status < 500) return res.status(status).json({ error: 'Requisição inválida.' })

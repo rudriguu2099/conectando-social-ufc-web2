@@ -26,7 +26,10 @@ export const usersDocs = {
         summary: 'Dados do usuário logado',
         security: [{ bearerAuth: [] }],
         responses: {
-          200: { description: 'Usuário', content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } } },
+          200: {
+            description: 'Usuário',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } },
+          },
           401: { $ref: '#/components/responses/Unauthorized' },
         },
       },

@@ -1,6 +1,6 @@
 import type { User } from '@prisma/client'
-import { prisma } from '../../lib/prisma.ts'
 import { HttpError } from '../../lib/http-error.ts'
+import { prisma } from '../../lib/prisma.ts'
 
 export type PublicUser = Omit<User, 'passwordHash'>
 

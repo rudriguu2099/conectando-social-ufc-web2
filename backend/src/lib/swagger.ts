@@ -12,7 +12,10 @@ export const openApiSpec = {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: Object.assign(
       {
-        Error: { type: 'object', properties: { error: { type: 'string', example: 'Mensagem para o usuário.' } } },
+        Error: {
+          type: 'object',
+          properties: { error: { type: 'string', example: 'Mensagem para o usuário.' } },
+        },
       },
       ...modules.map((m) => m.schemas),
     ),
