@@ -14,6 +14,12 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   next()
 }
 
+// public routes that show more to logged users. A bad token is still a 401, so the front knows it has to refresh
+export async function authenticateOptional(req: Request, res: Response, next: NextFunction) {
+  if (!req.headers.authorization) return next()
+  return authenticate(req, res, next)
+}
+
 export const requireRole =
   (...roles: Role[]) =>
   (req: Request, res: Response, next: NextFunction) => {

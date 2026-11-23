@@ -1,7 +1,8 @@
 import { authDocs } from '../modules/auth/auth.docs.ts'
+import { projectsDocs } from '../modules/projects/projects.docs.ts'
 import { usersDocs } from '../modules/users/users.docs.ts'
 
-const modules = [authDocs, usersDocs]
+const modules = [authDocs, usersDocs, projectsDocs]
 
 export const openApiSpec = {
   openapi: '3.0.3',

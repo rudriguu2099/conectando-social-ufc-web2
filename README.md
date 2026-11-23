@@ -32,8 +32,11 @@ Professores não se cadastram; a conta vem do seed:
 ```sh
 docker compose exec backend npm run seed                                # Prof. Carla Mendes (carla@ufc.br / senha1234), só dev
 docker compose exec backend npm run seed -- "Nome" email@ufc.br senha   # professor real
+docker compose exec backend npm run seed:demo                           # parceiros, alunos e projetos de exemplo, só dev (senha de todos: senha1234)
 docker compose exec backend npm test
 ```
+
+Contas do `seed:demo`: `maria@vidanova.org` (parceiro), `ana.ribeiro@alu.ufc.br` (aluno) e `carla@ufc.br` (professor). A senha só é definida quando a conta é criada; contas que já existem não mudam.
 
 ## Deploy
 

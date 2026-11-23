@@ -4,6 +4,7 @@ import { errorHandler } from './lib/http-error.ts'
 import { prisma } from './lib/prisma.ts'
 import { openApiSpec } from './lib/swagger.ts'
 import { authRoutes } from './modules/auth/auth.routes.ts'
+import { projectsRoutes } from './modules/projects/projects.routes.ts'
 import { usersRoutes } from './modules/users/users.routes.ts'
 
 export const app = express()
@@ -16,6 +17,7 @@ app.get('/api/health', async (req, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
+app.use('/api/projects', projectsRoutes)
 
 // docs
 if (process.env.NODE_ENV !== 'production') {
