@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { signup, getSignupErrorMessage } from '@/features/auth/auth.service'
 
 export const TIPOS_PARCEIRO = [
   'ONG',
@@ -52,9 +54,12 @@ const initialForm: FormParceiroData = {
 }
 
 export function useFormParceiro() {
+  const navigate = useNavigate()
   const [form, setForm] = useState<FormParceiroData>(initialForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [payload, setPayload] = useState<FormParceiroData | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   function updateField<K extends keyof FormParceiroData>(
     field: K,
@@ -62,8 +67,8 @@ export function useFormParceiro() {
   ) {
     setForm((current) => ({ ...current, [field]: value }))
   }
-
-  function handleSubmit() {
+  
+  async function handleSubmit() {
     const result = formParceiroSchema.safeParse(form)
     if (!result.success) {
       setErrors(
@@ -78,13 +83,30 @@ export function useFormParceiro() {
     }
 
     setErrors({})
+    setSubmitError(null)
     setPayload(result.data)
+    setIsSubmitting(true)
+
+    try {
+      await signup({
+        ...result.data,
+        termsAccepted: true,
+      })
+      navigate('/home');
+
+    } catch (error) {
+      setSubmitError(getSignupErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return {
     form,
     errors,
     payload,
+    isSubmitting,
+    submitError,
     updateField,
     handleSubmit,
   }

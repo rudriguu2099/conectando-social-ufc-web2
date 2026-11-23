@@ -4,8 +4,10 @@ import EntrarPage from '@/pages/EntrarPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import CriarConta from '@/pages/CriarConta'
 import EsqueciSenhaPage from '@/pages/EsqueciSenhaPage'
+import HomePage from '@/pages/HomePage'
 
 export const router = createBrowserRouter([
+  { path: '/home', element: <HomePage /> },
   {
     path: '/',
     element: <AuthLayout />,

@@ -13,7 +13,14 @@ import {
 } from './useFormParceiro'
 
 export default function FormParceiro() {
-  const { form, errors, updateField, handleSubmit } = useFormParceiro()
+  const {
+    form,
+    errors,
+    isSubmitting,
+    submitError,
+    updateField,
+    handleSubmit,
+  } = useFormParceiro()
 
   return (
     <form className="space-y-3" action={handleSubmit}>
@@ -161,10 +168,15 @@ export default function FormParceiro() {
 
       <Button
         type="submit"
+        disabled={isSubmitting}
         className="h-10 w-full rounded-sm bg-sky-800 text-sm font-medium text-white hover:bg-sky-900"
       >
-        Criar conta
+        {isSubmitting ? 'Criando conta...' : 'Criar conta'}
       </Button>
+
+      {submitError && (
+        <AuthFormNotice>{submitError}</AuthFormNotice>
+      )}
 
     </form>
   )

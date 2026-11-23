@@ -11,6 +11,6 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: { '/api': process.env.API_URL || 'http://backend:3000' },
+    proxy: { '/api': process.env.VITE_API_URL || 'http://backend:3000' },
   },
 })

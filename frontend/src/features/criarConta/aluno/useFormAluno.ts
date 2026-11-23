@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { signup, getSignupErrorMessage } from '@/features/auth/auth.service'
 
 export const CURSOS = [
   'Engenharia de Software',
@@ -39,9 +41,12 @@ const initialForm: FormAlunoData = {
 }
 
 export function useFormAluno() {
+  const navigate = useNavigate()
   const [form, setForm] = useState<FormAlunoData>(initialForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [payload, setPayload] = useState<FormAlunoData | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   function updateField<K extends keyof FormAlunoData>(
     field: K,
@@ -50,7 +55,7 @@ export function useFormAluno() {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const result = formAlunoSchema.safeParse(form)
     if (!result.success) {
       setErrors(
@@ -65,13 +70,26 @@ export function useFormAluno() {
     }
 
     setErrors({})
+    setSubmitError(null)
     setPayload(result.data)
+    setIsSubmitting(true)
+
+    try {
+      await signup(result.data)
+      navigate('/home');
+    } catch (error) {
+      setSubmitError(getSignupErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return {
     form,
     errors,
     payload,
+    isSubmitting,
+    submitError,
     updateField,
     handleSubmit,
   }
