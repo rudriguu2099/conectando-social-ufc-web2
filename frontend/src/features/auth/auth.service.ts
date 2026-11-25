@@ -4,6 +4,7 @@ import { localStorageKeys } from '@/app/config/localStorageKeys'
 import type {
   LoginPayload,
   LoginSession,
+  ResetPasswordPayload,
   SignupPayload,
   SignupSession,
 } from './types'
@@ -54,4 +55,17 @@ export function getSignupErrorMessage(error: unknown) {
     return error.response?.data.error ?? 'Não foi possível criar a conta.'
   }
   return 'Não foi possível criar a conta. Tente novamente.'
+}
+
+export async function resetPassword(payload: ResetPasswordPayload) {
+  await httpClient.post('/auth/reset-password', payload)
+  localStorage.removeItem(localStorageKeys.ACCESS_TOKEN)
+}
+
+export function getResetPasswordErrorMessage(error: unknown) {
+  if (axios.isAxiosError<{ error?: string }>(error)) {
+    return error.response?.data.error ??
+      'Não foi possível salvar a senha. Tente novamente.'
+  }
+  return 'Não foi possível salvar a senha. Verifique sua conexão e tente novamente.'
 }
