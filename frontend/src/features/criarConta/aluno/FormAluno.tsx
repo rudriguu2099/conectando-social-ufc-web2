@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import AuthSubmitButton from '@/features/auth/components/AuthSubmitButton'
 import AuthField from '@/features/auth/components/AuthField'
 import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
 import AuthInput from '@/features/auth/components/AuthInput'
@@ -18,7 +18,7 @@ export default function FormAluno() {
   } = useFormAluno()
 
   return (
-    <form className="space-y-3" action={handleSubmit}>
+    <form className="space-y-5" action={handleSubmit}>
       <AuthField id="aluno-name" label="Nome completo" required>
         <AuthInput
           id="aluno-name"
@@ -90,13 +90,12 @@ export default function FormAluno() {
         )}
       </AuthField>
 
-      <Button
+      <AuthSubmitButton
         type="submit"
         disabled={isSubmitting}
-        className="h-10 w-full rounded-sm bg-sky-800 text-sm font-medium text-white hover:bg-sky-900"
       >
         {isSubmitting ? 'Criando conta...' : 'Criar conta'}
-      </Button>
+      </AuthSubmitButton>
 
       {submitError && (
         <AuthFormNotice>{submitError}</AuthFormNotice>

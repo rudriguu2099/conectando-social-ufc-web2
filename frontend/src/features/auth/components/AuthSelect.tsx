@@ -11,8 +11,8 @@ export default function AuthSelect({
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-sm border border-neutral-400 bg-white px-3',
-        'text-sm text-neutral-900 outline-none',
+        'h-16 w-full rounded-none border border-neutral-500 bg-white px-4',
+        'text-lg text-neutral-900 outline-none',
         'focus:border-sky-800 focus:ring-3 focus:ring-sky-800/20',
         className,
       )}

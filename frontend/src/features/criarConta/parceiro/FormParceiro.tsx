@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
+import AuthSubmitButton from '@/features/auth/components/AuthSubmitButton'
 import { Checkbox } from '@/components/ui/checkbox'
 import AuthField from '@/features/auth/components/AuthField'
 import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
@@ -23,7 +23,7 @@ export default function FormParceiro() {
   } = useFormParceiro()
 
   return (
-    <form className="space-y-3" action={handleSubmit}>
+    <form className="space-y-5" action={handleSubmit}>
       <AuthField
         id="parceiro-name"
         label="Nome do responsável"
@@ -43,7 +43,7 @@ export default function FormParceiro() {
         )}
       </AuthField>
 
-      <AuthField id="parceiro-email" label="E-mail">
+      <AuthField id="parceiro-email" label="E-mail" required>
         <AuthInput
           id="parceiro-email"
           name="email"
@@ -59,7 +59,7 @@ export default function FormParceiro() {
         )}
       </AuthField>
 
-      <AuthField id="parceiro-password" label="Senha">
+      <AuthField id="parceiro-password" label="Senha" required>
         <AuthPasswordInput
           id="parceiro-password"
           name="password"
@@ -95,7 +95,7 @@ export default function FormParceiro() {
         )}
       </AuthField>
 
-      <AuthField id="parceiro-type" label="Tipo de parceiro">
+      <AuthField id="parceiro-type" label="Tipo de parceiro" required>
         <AuthSelect
           id="parceiro-type"
           name="partnerType"
@@ -134,10 +134,10 @@ export default function FormParceiro() {
         />
       </AuthField>
 
-      <div className="space-y-2 pt-1">
+      <div className="space-y-3 pt-2">
         <label
           htmlFor="terms"
-          className="flex items-center gap-2 text-xs text-neutral-800"
+          className="flex items-center gap-3 text-lg text-neutral-800"
         >
           <Checkbox
             id="terms"
@@ -153,26 +153,25 @@ export default function FormParceiro() {
         {errors.termsAccepted && (
           <AuthFormNotice>{errors.termsAccepted}</AuthFormNotice>
         )}
-        <p className="text-xs leading-5 text-neutral-500">
+        <p className="font-serif text-base leading-6 text-neutral-700">
           Os projetos são feitos por estudantes, sem custo, no ritmo do
           semestre e podem terminar como protótipo. Seus dados são tratados
           para aparecerem para professores e alunos.
         </p>
         <Link
           to="/termos"
-          className="block text-xs font-medium text-neutral-800 underline"
+          className="block font-serif text-base text-neutral-800 underline"
         >
           Ler o termo completo
         </Link>
       </div>
 
-      <Button
+      <AuthSubmitButton
         type="submit"
         disabled={isSubmitting}
-        className="h-10 w-full rounded-sm bg-sky-800 text-sm font-medium text-white hover:bg-sky-900"
       >
         {isSubmitting ? 'Criando conta...' : 'Criar conta'}
-      </Button>
+      </AuthSubmitButton>
 
       {submitError && (
         <AuthFormNotice>{submitError}</AuthFormNotice>

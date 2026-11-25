@@ -10,8 +10,8 @@ export default function CriarConta() {
   const [conta, setConta] = useState<TipoConta>('aluno')
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold tracking-tight">Criar conta</h2>
+    <div className="space-y-6">
+      <h2 className="font-serif text-[30px] font-bold leading-tight">Criar conta</h2>
 
       <div className="grid grid-cols-2 border-b border-neutral-300">
         <button
@@ -19,8 +19,8 @@ export default function CriarConta() {
           onClick={() => setConta('aluno')}
           className={
             conta === 'aluno'
-              ? 'border-b-2 border-neutral-950 py-2.5 text-sm font-semibold text-neutral-950'
-              : 'py-2.5 text-sm text-neutral-600'
+              ? 'border-b-2 border-neutral-950 py-3 text-base font-semibold text-neutral-950'
+              : 'py-3 text-base text-neutral-600'
           }
         >
           Sou aluno
@@ -30,8 +30,8 @@ export default function CriarConta() {
           onClick={() => setConta('parceiro')}
           className={
             conta === 'parceiro'
-              ? 'border-b-2 border-neutral-950 py-2.5 text-sm font-semibold text-neutral-950'
-              : 'py-2.5 text-sm text-neutral-600'
+              ? 'border-b-2 border-neutral-950 py-3 text-base font-semibold text-neutral-950'
+              : 'py-3 text-base text-neutral-600'
           }
         >
           Sou parceiro
@@ -40,7 +40,7 @@ export default function CriarConta() {
 
       {conta === 'aluno' ? <FormAluno /> : <FormParceiro />}
 
-      <p className="text-center text-sm text-neutral-600">
+      <p className="text-center text-base text-neutral-600">
         Já tem uma conta?{' '}
         <Link
           to="/"

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
+import AuthSubmitButton from '@/features/auth/components/AuthSubmitButton'
 import AuthField from '@/features/auth/components/AuthField'
 import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
 import AuthInput from '@/features/auth/components/AuthInput'
@@ -15,11 +15,11 @@ export default function EsqueciSenhaPage() {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Esqueci minha senha
+        <h2 className="font-serif text-[30px] font-bold leading-tight">
+          Recuperar senha
         </h2>
-        <p className="text-sm leading-5 text-neutral-500">
-          Informe o e-mail associado à sua conta.
+        <p className="font-serif text-xl leading-7 text-neutral-950">
+          Digite o e-mail da sua conta. Vamos enviar um link para você criar uma senha nova.
         </p>
       </div>
 
@@ -35,17 +35,16 @@ export default function EsqueciSenhaPage() {
           />
         </AuthField>
 
-        <Button
+        <AuthSubmitButton
           type="submit"
-          className="h-10 w-full rounded-sm bg-sky-800 text-sm font-medium text-white hover:bg-sky-900"
-        >
-          Recuperar senha
-        </Button>
+          >
+          Enviar link
+        </AuthSubmitButton>
 
         {notice && <AuthFormNotice>{notice}</AuthFormNotice>}
       </form>
 
-      <p className="text-center text-sm">
+      <p className="text-center text-base">
         <Link
           to="/"
           className="font-medium text-neutral-900 underline underline-offset-2 hover:text-sky-800"
