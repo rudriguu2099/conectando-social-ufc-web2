@@ -4,12 +4,30 @@ import AuthSubmitButton from '@/features/auth/components/AuthSubmitButton'
 import AuthField from '@/features/auth/components/AuthField'
 import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
 import AuthInput from '@/features/auth/components/AuthInput'
+import { forgotPassword } from '@/features/auth/auth.service'
 
 export default function EsqueciSenhaPage() {
   const [notice, setNotice] = useState<string | null>(null)
 
-  function handleSubmit() {
-    setNotice('A recuperação de senha ainda não está conectada ao backend.')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  async function handleSubmit(formData: FormData) {
+    if (isSubmitting) return
+
+    const email = String(formData.get('email') ?? '').trim()
+    setNotice(null)
+    setIsSubmitting(true)
+
+    try {
+      await forgotPassword(email)
+      setNotice(
+        'Se existir uma conta com esse e-mail, enviaremos um link para recuperar a senha.',
+      )
+    } catch {
+      setNotice('Não foi possível solicitar o link. Tente novamente.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -19,7 +37,7 @@ export default function EsqueciSenhaPage() {
           Recuperar senha
         </h2>
         <p className="font-serif text-xl leading-7 text-neutral-950">
-          Digite o e-mail da sua conta. Vamos enviar um link para você criar uma senha nova.
+          Informe seu e-mail para recuperar a senha.
         </p>
       </div>
 
@@ -35,10 +53,8 @@ export default function EsqueciSenhaPage() {
           />
         </AuthField>
 
-        <AuthSubmitButton
-          type="submit"
-          >
-          Enviar link
+        <AuthSubmitButton disabled={isSubmitting}>
+          {isSubmitting ? 'Enviando...' : 'Enviar link'}
         </AuthSubmitButton>
 
         {notice && <AuthFormNotice>{notice}</AuthFormNotice>}

@@ -69,3 +69,7 @@ export function getResetPasswordErrorMessage(error: unknown) {
   }
   return 'Não foi possível salvar a senha. Verifique sua conexão e tente novamente.'
 }
+
+export async function forgotPassword(email: string) {
+  await httpClient.post('/auth/forgot-password', { email })
+}
