@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  PARTNER
+  PROFESSOR
+}
+
+model User {
+  id                 String              @id @default(uuid(7)) @db.Uuid
+  name               String
+  email              String              @unique
+  passwordHash       String
+  role               Role
+  course             String? // student, from COURSES
+  organization       String? // partner
+  partnerType        String? // partner, from PARTNER_TYPES
+  phone              String? // partner, optional
+  termsAcceptedAt    DateTime? // partner, required on signup
+  createdAt          DateTime            @default(now())
+  refreshTokens      RefreshToken[]
+  passwordResetToken PasswordResetToken?
+  demands            Project[]           @relation("partner")
+  guidedProjects     Project[]           @relation("professor")
+  applications       Project[]           @relation("applicant")
+  memberships        ProjectMember[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  hash      String   @unique
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @unique @db.Uuid // one active link per user
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now()) // resend cooldown
+}
+
+enum ProjectStatus {
+  IN_REVIEW
+  REJECTED
+  AVAILABLE
+  AWAITING_APPROVAL
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum Phase {
+  REQUIREMENTS
+  DESIGN
+  DEVELOPMENT
+  VALIDATION
+}
+
+// a demand and a project are the same record at different points of its life cycle
+model Project {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  title            String
+  problem          String
+  affected         String
+  currentSituation String?
+  expectedOutcome  String
+  availability     String?
+  status           ProjectStatus   @default(IN_REVIEW)
+  statusReason     String? // why it was rejected or canceled
+  phase            Phase? // only while in progress
+  partnerId        String          @db.Uuid
+  partner          User            @relation("partner", fields: [partnerId], references: [id])
+  professorId      String?         @db.Uuid // indicated in the application, responsible once approved
+  professor        User?           @relation("professor", fields: [professorId], references: [id])
+  applicantId      String?         @db.Uuid // student who sent the application
+  applicant        User?           @relation("applicant", fields: [applicantId], references: [id])
+  appliedAt        DateTime?
+  discipline       String?
+  semester         String? // e.g. 2026.2
+  repoUrl          String?
+  figmaUrl         String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  members          ProjectMember[]
+
+  @@index([status, updatedAt])
+  @@index([partnerId])
+  @@index([professorId])
+}
+
+model ProjectMember {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  projectId String  @db.Uuid
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String  @db.Uuid
+  user      User    @relation(fields: [userId], references: [id])
+  teamRole  String
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}

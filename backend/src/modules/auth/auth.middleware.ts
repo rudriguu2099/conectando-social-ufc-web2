@@ -1,0 +1,29 @@
+import type { Role } from '@prisma/client'
+import type { NextFunction, Request, Response } from 'express'
+import { HttpError } from '../../lib/http-error.ts'
+import { verifyAccessToken } from './tokens.ts'
+
+export async function authenticate(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1]
+  if (!token) throw new HttpError(401, 'Faça login para continuar.')
+  try {
+    req.user = await verifyAccessToken(token)
+  } catch {
+    throw new HttpError(401, 'Sessão expirada. Faça login de novo.')
+  }
+  next()
+}
+
+// public routes that show more to logged users. A bad token is still a 401, so the front knows it has to refresh
+export async function authenticateOptional(req: Request, res: Response, next: NextFunction) {
+  if (!req.headers.authorization) return next()
+  return authenticate(req, res, next)
+}
+
+export const requireRole =
+  (...roles: Role[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role))
+      throw new HttpError(403, 'Você não tem permissão para isso.')
+    next()
+  }
