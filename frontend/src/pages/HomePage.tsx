@@ -1,57 +1,15 @@
 import { ArrowLeft, Info, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import AppHeader from '@/components/layout/AppHeader'
 import { Button } from '@/components/ui/button'
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from '@/components/ui/navigation-menu'
 
 export default function HomePage() {
   const [notice, setNotice] = useState(false)
 
   return (
     <div className="min-h-screen bg-white font-serif text-slate-950">
-      <header className="bg-slate-950 text-white">
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-8 px-5 sm:px-8">
-          <Link to="/home" className="shrink-0 text-lg font-bold tracking-tight">
-            Conectando Social
-          </Link>
-
-          <nav aria-label="Navegação principal" className="font-sans text-sm">
-            <NavigationMenu>
-              <NavigationMenuList className="gap-6">
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    render={<Link to="/home" />}
-                    aria-current="page"
-                    className="rounded-none px-0 py-0 font-medium text-white underline underline-offset-4 hover:bg-transparent hover:text-white focus:bg-transparent"
-                  >
-                    Vitrine
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink
-                    render={<Link to="/home#meus-projetos" />}
-                    className="rounded-none px-0 py-0 text-slate-300 hover:bg-transparent hover:text-white focus:bg-transparent"
-                  >
-                    Meus projetos
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </nav>
-
-          <button type="button" aria-label="Perfil de Ana Ribeiro" className="ml-auto rounded-full">
-            <Avatar className="bg-white font-sans text-slate-950">
-              <AvatarFallback className="bg-white text-slate-950">AR</AvatarFallback>
-            </Avatar>
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto max-w-5xl px-5 py-7 sm:px-8 sm:py-9">
         <Link

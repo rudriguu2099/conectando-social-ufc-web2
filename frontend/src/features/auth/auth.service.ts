@@ -62,3 +62,8 @@ export function getResetPasswordErrorMessage(error: unknown) {
 export async function forgotPassword(email: string) {
   await httpClient.post('/auth/forgot-password', { email })
 }
+
+export async function logout() {
+  await httpClient.post('/auth/logout', {}, { withCredentials: true })
+  localStorage.removeItem(localStorageKeys.ACCESS_TOKEN)
+}
