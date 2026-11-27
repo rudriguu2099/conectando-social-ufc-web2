@@ -4,11 +4,13 @@ import CriarConta from '@/pages/CriarConta'
 import EntrarPage from '@/pages/EntrarPage'
 import EsqueciSenhaPage from '@/pages/EsqueciSenhaPage'
 import HomePage from '@/pages/HomePage'
+import MeusProjetosPage from '@/pages/MeusProjetosPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import RedefinirSenhaPage from '@/pages/RedefinirSenhaPage'
 
 export const router = createBrowserRouter([
   { path: '/home', element: <HomePage /> },
+  { path: '/meus-projetos', element: <MeusProjetosPage /> },
   {
     path: '/',
     element: <AuthLayout />,
