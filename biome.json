@@ -27,6 +27,11 @@
       "semicolons": "asNeeded"
     }
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "assist": {
     "enabled": true,
     "actions": {
@@ -41,6 +46,14 @@
       "linter": {
         "domains": {
           "react": "recommended"
+        }
+      }
+    },
+    {
+      "includes": ["frontend/src/components/ui/**"],
+      "linter": {
+        "rules": {
+          "a11y": { "noLabelWithoutControl": "off" }
         }
       }
     }
