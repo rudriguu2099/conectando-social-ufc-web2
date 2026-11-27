@@ -15,9 +15,7 @@ export default function EsqueciSenhaPage() {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Esqueci minha senha
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">Esqueci minha senha</h2>
         <p className="text-sm leading-5 text-neutral-500">
           Informe o e-mail associado à sua conta.
         </p>

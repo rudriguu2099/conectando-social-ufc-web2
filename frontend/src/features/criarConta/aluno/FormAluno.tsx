@@ -8,14 +8,7 @@ import { CURSOS, type FormAlunoData } from './types'
 import { useFormAluno } from './useFormAluno'
 
 export default function FormAluno() {
-  const {
-    form,
-    errors,
-    isSubmitting,
-    submitError,
-    updateField,
-    handleSubmit,
-  } = useFormAluno()
+  const { form, errors, isSubmitting, submitError, updateField, handleSubmit } = useFormAluno()
 
   return (
     <form className="space-y-3" action={handleSubmit}>
@@ -29,9 +22,7 @@ export default function FormAluno() {
           value={form.name}
           onChange={(event) => updateField('name', event.target.value)}
         />
-        {errors.name && (
-          <AuthFormNotice>{errors.name}</AuthFormNotice>
-        )}
+        {errors.name && <AuthFormNotice>{errors.name}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="aluno-email" label="E-mail" required>
@@ -45,9 +36,7 @@ export default function FormAluno() {
           value={form.email}
           onChange={(event) => updateField('email', event.target.value)}
         />
-        {errors.email && (
-          <AuthFormNotice>{errors.email}</AuthFormNotice>
-        )}
+        {errors.email && <AuthFormNotice>{errors.email}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="aluno-password" label="Senha" required>
@@ -61,9 +50,7 @@ export default function FormAluno() {
           value={form.password}
           onChange={(event) => updateField('password', event.target.value)}
         />
-        {errors.password && (
-          <AuthFormNotice>{errors.password}</AuthFormNotice>
-        )}
+        {errors.password && <AuthFormNotice>{errors.password}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="aluno-course" label="Curso" required>
@@ -71,9 +58,7 @@ export default function FormAluno() {
           id="aluno-course"
           name="course"
           value={form.course}
-          onChange={(event) =>
-            updateField('course', event.target.value as FormAlunoData['course'])
-          }
+          onChange={(event) => updateField('course', event.target.value as FormAlunoData['course'])}
           required
         >
           <option value="" disabled>
@@ -85,9 +70,7 @@ export default function FormAluno() {
             </option>
           ))}
         </AuthSelect>
-        {errors.course && (
-          <AuthFormNotice>{errors.course}</AuthFormNotice>
-        )}
+        {errors.course && <AuthFormNotice>{errors.course}</AuthFormNotice>}
       </AuthField>
 
       <Button
@@ -98,10 +81,7 @@ export default function FormAluno() {
         {isSubmitting ? 'Criando conta...' : 'Criar conta'}
       </Button>
 
-      {submitError && (
-        <AuthFormNotice>{submitError}</AuthFormNotice>
-      )}
-
+      {submitError && <AuthFormNotice>{submitError}</AuthFormNotice>}
     </form>
   )
 }

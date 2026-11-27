@@ -1,0 +1,19 @@
+{
+  "name": "conectando-social-ufc-web2",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "lint": "biome lint",
+    "format": "biome format --write",
+    "check": "biome check",
+    "check:fix": "biome check --write"
+  },
+  "lint-staged": {
+    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1"
+  }
+}

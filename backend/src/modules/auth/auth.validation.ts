@@ -1,21 +1,12 @@
 import type { Prisma } from '@prisma/client'
-import { HttpError } from '../../lib/http-error.ts'
+import { invalid, parseEmail, text } from '../../lib/validation.ts'
 import { COURSES, PARTNER_TYPES } from '../users/users.constants.ts'
-
-const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const invalid = (message: string) => new HttpError(400, message)
 
 function parsePassword(v: unknown) {
   const password = typeof v === 'string' ? v : ''
-  if (password.length < 8 || password.length > 128) throw invalid('A senha precisa ter entre 8 e 128 caracteres.')
+  if (password.length < 8 || password.length > 128)
+    throw invalid('A senha precisa ter entre 8 e 128 caracteres.')
   return password
-}
-
-function parseEmail(v: unknown) {
-  const email = text(v).toLowerCase()
-  if (!EMAIL_RE.test(email)) throw invalid('Informe um e-mail válido.')
-  return email
 }
 
 export type SignupInput = { password: string; data: Omit<Prisma.UserCreateInput, 'passwordHash'> }
@@ -40,7 +31,15 @@ export function parseSignup(b: Record<string, unknown>): SignupInput {
   if (b.termsAccepted !== true) throw invalid('É preciso aceitar o termo de ciência.')
   return {
     password,
-    data: { name, email, role: b.role, organization, partnerType, phone: text(b.phone) || null, termsAcceptedAt: new Date() },
+    data: {
+      name,
+      email,
+      role: b.role,
+      organization,
+      partnerType,
+      phone: text(b.phone) || null,
+      termsAcceptedAt: new Date(),
+    },
   }
 }
 

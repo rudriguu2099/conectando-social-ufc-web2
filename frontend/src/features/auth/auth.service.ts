@@ -1,36 +1,21 @@
 import axios from 'axios'
-import { httpClient } from '@/service/httpClient'
 import { localStorageKeys } from '@/app/config/localStorageKeys'
-import type {
-  LoginPayload,
-  LoginSession,
-  SignupPayload,
-  SignupSession,
-} from './types'
+import { httpClient } from '@/service/httpClient'
+import type { LoginPayload, LoginSession, SignupPayload, SignupSession } from './types'
 
 export async function login(payload: LoginPayload) {
-  const { data: session } = await httpClient.post<LoginSession>(
-    '/auth/login',
-    payload,
-    { withCredentials: true },
-  )
-  localStorage.setItem(
-    localStorageKeys.ACCESS_TOKEN,
-    session.accessToken,
-  )
+  const { data: session } = await httpClient.post<LoginSession>('/auth/login', payload, {
+    withCredentials: true,
+  })
+  localStorage.setItem(localStorageKeys.ACCESS_TOKEN, session.accessToken)
   return session
 }
 
 export async function signup(payload: SignupPayload) {
-  const { data: session } = await httpClient.post<SignupSession>(
-    '/auth/signup',
-    payload,
-    { withCredentials: true },
-  )
-  localStorage.setItem(
-    localStorageKeys.ACCESS_TOKEN,
-    session.accessToken,
-  )
+  const { data: session } = await httpClient.post<SignupSession>('/auth/signup', payload, {
+    withCredentials: true,
+  })
+  localStorage.setItem(localStorageKeys.ACCESS_TOKEN, session.accessToken)
   return session
 }
 

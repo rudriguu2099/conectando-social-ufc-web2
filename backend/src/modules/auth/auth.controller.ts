@@ -1,7 +1,12 @@
 import type { Request, Response } from 'express'
 import { HttpError } from '../../lib/http-error.ts'
 import * as authService from './auth.service.ts'
-import { parseForgotPassword, parseLogin, parseResetPassword, parseSignup } from './auth.validation.ts'
+import {
+  parseForgotPassword,
+  parseLogin,
+  parseResetPassword,
+  parseSignup,
+} from './auth.validation.ts'
 import { REFRESH_TTL_MS } from './tokens.ts'
 
 const REFRESH_COOKIE = 'refreshToken'

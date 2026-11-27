@@ -6,29 +6,15 @@ import AuthFormNotice from '@/features/auth/components/AuthFormNotice'
 import AuthInput from '@/features/auth/components/AuthInput'
 import AuthPasswordInput from '@/features/auth/components/AuthPasswordInput'
 import AuthSelect from '@/features/auth/components/AuthSelect'
-import {
-  TIPOS_PARCEIRO,
-  type FormParceiroData,
-} from './types'
+import { type FormParceiroData, TIPOS_PARCEIRO } from './types'
 import { useFormParceiro } from './useFormParceiro'
 
 export default function FormParceiro() {
-  const {
-    form,
-    errors,
-    isSubmitting,
-    submitError,
-    updateField,
-    handleSubmit,
-  } = useFormParceiro()
+  const { form, errors, isSubmitting, submitError, updateField, handleSubmit } = useFormParceiro()
 
   return (
     <form className="space-y-3" action={handleSubmit}>
-      <AuthField
-        id="parceiro-name"
-        label="Nome do responsável"
-        required
-      >
+      <AuthField id="parceiro-name" label="Nome do responsável" required>
         <AuthInput
           id="parceiro-name"
           name="name"
@@ -38,9 +24,7 @@ export default function FormParceiro() {
           value={form.name}
           onChange={(event) => updateField('name', event.target.value)}
         />
-        {errors.name && (
-          <AuthFormNotice>{errors.name}</AuthFormNotice>
-        )}
+        {errors.name && <AuthFormNotice>{errors.name}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="parceiro-email" label="E-mail">
@@ -54,9 +38,7 @@ export default function FormParceiro() {
           value={form.email}
           onChange={(event) => updateField('email', event.target.value)}
         />
-        {errors.email && (
-          <AuthFormNotice>{errors.email}</AuthFormNotice>
-        )}
+        {errors.email && <AuthFormNotice>{errors.email}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="parceiro-password" label="Senha">
@@ -70,29 +52,19 @@ export default function FormParceiro() {
           value={form.password}
           onChange={(event) => updateField('password', event.target.value)}
         />
-        {errors.password && (
-          <AuthFormNotice>{errors.password}</AuthFormNotice>
-        )}
+        {errors.password && <AuthFormNotice>{errors.password}</AuthFormNotice>}
       </AuthField>
 
-      <AuthField
-        id="parceiro-organization"
-        label="Organização"
-        required
-      >
+      <AuthField id="parceiro-organization" label="Organização" required>
         <AuthInput
           id="parceiro-organization"
           name="organization"
           placeholder="Associação Vida Nova"
           required
           value={form.organization}
-          onChange={(event) =>
-            updateField('organization', event.target.value)
-          }
+          onChange={(event) => updateField('organization', event.target.value)}
         />
-        {errors.organization && (
-          <AuthFormNotice>{errors.organization}</AuthFormNotice>
-        )}
+        {errors.organization && <AuthFormNotice>{errors.organization}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="parceiro-type" label="Tipo de parceiro">
@@ -101,10 +73,7 @@ export default function FormParceiro() {
           name="partnerType"
           value={form.partnerType}
           onChange={(event) =>
-            updateField(
-              'partnerType',
-              event.target.value as FormParceiroData['partnerType'],
-            )
+            updateField('partnerType', event.target.value as FormParceiroData['partnerType'])
           }
           required
         >
@@ -117,9 +86,7 @@ export default function FormParceiro() {
             </option>
           ))}
         </AuthSelect>
-        {errors.partnerType && (
-          <AuthFormNotice>{errors.partnerType}</AuthFormNotice>
-        )}
+        {errors.partnerType && <AuthFormNotice>{errors.partnerType}</AuthFormNotice>}
       </AuthField>
 
       <AuthField id="parceiro-phone" label="Telefone ou WhatsApp">
@@ -135,33 +102,22 @@ export default function FormParceiro() {
       </AuthField>
 
       <div className="space-y-2 pt-1">
-        <label
-          htmlFor="terms"
-          className="flex items-center gap-2 text-xs text-neutral-800"
-        >
+        <label htmlFor="terms" className="flex items-center gap-2 text-xs text-neutral-800">
           <Checkbox
             id="terms"
             name="terms"
             required
             checked={form.termsAccepted}
-            onCheckedChange={(checked) =>
-              updateField('termsAccepted', checked === true)
-            }
+            onCheckedChange={(checked) => updateField('termsAccepted', checked === true)}
           />
           Li e aceito o termo de ciência
         </label>
-        {errors.termsAccepted && (
-          <AuthFormNotice>{errors.termsAccepted}</AuthFormNotice>
-        )}
+        {errors.termsAccepted && <AuthFormNotice>{errors.termsAccepted}</AuthFormNotice>}
         <p className="text-xs leading-5 text-neutral-500">
-          Os projetos são feitos por estudantes, sem custo, no ritmo do
-          semestre e podem terminar como protótipo. Seus dados são tratados
-          para aparecerem para professores e alunos.
+          Os projetos são feitos por estudantes, sem custo, no ritmo do semestre e podem terminar
+          como protótipo. Seus dados são tratados para aparecerem para professores e alunos.
         </p>
-        <Link
-          to="/termos"
-          className="block text-xs font-medium text-neutral-800 underline"
-        >
+        <Link to="/termos" className="block text-xs font-medium text-neutral-800 underline">
           Ler o termo completo
         </Link>
       </div>
@@ -174,10 +130,7 @@ export default function FormParceiro() {
         {isSubmitting ? 'Criando conta...' : 'Criar conta'}
       </Button>
 
-      {submitError && (
-        <AuthFormNotice>{submitError}</AuthFormNotice>
-      )}
-
+      {submitError && <AuthFormNotice>{submitError}</AuthFormNotice>}
     </form>
   )
 }
