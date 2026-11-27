@@ -1,9 +1,18 @@
 import type { Request, Response } from 'express'
 import { HttpError } from '../../lib/http-error.ts'
 import * as projectsService from './projects.service.ts'
-import { parseApplication, parseDemand, parseReason, parseTab } from './projects.validation.ts'
+import {
+  parseApplication,
+  parseAttachment,
+  parseDemand,
+  parseProjectUpdate,
+  parseReason,
+  parseTab,
+  parseTeam,
+} from './projects.validation.ts'
 
 type IdRequest = Request<{ id: string }>
+type AttachmentRequest = Request<{ id: string; attachmentId: string }>
 
 function loggedUser(req: { user?: Request['user'] }) {
   if (!req.user) throw new HttpError(401, 'Faça login para continuar.')
@@ -56,4 +65,36 @@ export async function approveApplication(req: IdRequest, res: Response) {
 
 export async function rejectApplication(req: IdRequest, res: Response) {
   res.json(await projectsService.rejectApplication(req.params.id, loggedUser(req)))
+}
+
+export async function update(req: IdRequest, res: Response) {
+  const data = parseProjectUpdate(req.body ?? {})
+  res.json(await projectsService.updateProject(req.params.id, data, loggedUser(req)))
+}
+
+export async function replaceTeam(req: IdRequest, res: Response) {
+  const members = parseTeam(req.body ?? {})
+  res.json(await projectsService.replaceTeam(req.params.id, members, loggedUser(req)))
+}
+
+export async function complete(req: IdRequest, res: Response) {
+  res.json(await projectsService.completeProject(req.params.id, loggedUser(req)))
+}
+
+export async function addAttachment(req: IdRequest, res: Response) {
+  const attachment = parseAttachment(req.query, req.body)
+  res
+    .status(201)
+    .json(await projectsService.addAttachment(req.params.id, attachment, loggedUser(req)))
+}
+
+export async function downloadAttachment(req: AttachmentRequest, res: Response) {
+  const { id, attachmentId } = req.params
+  const file = await projectsService.getAttachmentFile(id, attachmentId, loggedUser(req))
+  res.download(file.path, file.fileName)
+}
+
+export async function removeAttachment(req: AttachmentRequest, res: Response) {
+  const { id, attachmentId } = req.params
+  res.json(await projectsService.removeAttachment(id, attachmentId, loggedUser(req)))
 }

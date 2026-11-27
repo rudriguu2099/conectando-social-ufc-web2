@@ -1,12 +1,16 @@
 // Needs the database: npm test (inside the backend container, or with DATABASE_URL + JWT_SECRET set)
 import assert from 'node:assert/strict'
+import { mkdtemp, readdir, rm } from 'node:fs/promises'
 import type { AddressInfo } from 'node:net'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { after, before, test } from 'node:test'
 import type { Role } from '@prisma/client'
 import { app } from '../../index.ts'
 import { prisma } from '../../lib/prisma.ts'
 import { signAccessToken } from '../auth/tokens.ts'
 
+process.env.UPLOAD_DIR = await mkdtemp(path.join(tmpdir(), 'uploads-'))
 const server = app.listen(0)
 const base = `http://localhost:${(server.address() as AddressInfo).port}/api`
 const run = Date.now()
@@ -43,6 +47,7 @@ after(async () => {
   await prisma.project.deleteMany({ where: { partnerId: { in: ids } } })
   await prisma.user.deleteMany({ where: { id: { in: ids } } })
   await prisma.$disconnect()
+  await rm(process.env.UPLOAD_DIR as string, { recursive: true, force: true })
   server.close()
 })
 
@@ -59,6 +64,22 @@ async function call(method: string, path: string, as?: string, body?: object) {
 }
 const get = (path: string, as?: string) => call('GET', path, as)
 const post = (path: string, as?: string, body?: object) => call('POST', path, as, body)
+const patch = (path: string, as?: string, body?: object) => call('PATCH', path, as, body)
+const put = (path: string, as?: string, body?: object) => call('PUT', path, as, body)
+const del = (path: string, as?: string) => call('DELETE', path, as)
+
+async function upload(id: string, as: string | undefined, fileName: string, content = 'conteúdo') {
+  const query = new URLSearchParams({ fileName, category: 'REQUIREMENTS' })
+  const r = await fetch(`${base}/projects/${id}/attachments?${query}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/octet-stream',
+      ...(as && { authorization: `Bearer ${users[as].token}` }),
+    },
+    body: content,
+  })
+  return { status: r.status, body: await r.json() }
+}
 
 const demand = {
   title: 'Cadastro de voluntários',
@@ -149,7 +170,6 @@ test('demand review: pending list, approve, reject with reason, only once', asyn
   assert.equal(rejected.body.status, 'REJECTED')
   assert.equal((await get(`/projects/${rejectedId}`)).status, 404)
 
-  assert.equal((await get('/projects/mine', 'ana')).status, 403)
   const mine = (await get('/projects/mine', 'partner')).body
   const row = mine.find((p: { id: string }) => p.id === rejectedId)
   assert.equal(row.statusReason, 'Escopo grande')
@@ -232,6 +252,9 @@ test('application: validation', async () => {
     apply: true,
     reviewApplication: false,
     cancel: false,
+    edit: false,
+    editRepo: false,
+    complete: false,
   })
   assert.equal(
     (await post(`/projects/${await newDemand()}/application`, 'ana', application())).status,
@@ -328,4 +351,193 @@ test('form options: professors and teammate by e-mail', async () => {
   assert.equal((await find(users.carla.email)).status, 404)
   assert.equal((await find('invalido')).status, 400)
   assert.equal((await find(users.bruno.email, 'partner')).status, 403)
+})
+
+// flow 6
+
+async function newInProgress() {
+  const id = await newAwaiting()
+  assert.equal((await post(`/projects/${id}/application/approve`, 'carla')).status, 200)
+  return id
+}
+const figmaUrl = 'https://www.figma.com/design/abc/estoque'
+const repoUrl = 'https://github.com/carla/estoque'
+
+test('progress: team and responsible professor change phase and Figma; only the professor the repo', async () => {
+  const id = await newInProgress()
+  for (const as of ['outsider', 'daniel', 'partner'])
+    assert.equal((await patch(`/projects/${id}`, as, { phase: 'DESIGN' })).status, 403, as)
+  assert.equal((await patch(`/projects/${id}`, undefined, { phase: 'DESIGN' })).status, 401)
+
+  const bad: object[] = [
+    {},
+    { phase: 'DONE' },
+    { figmaUrl: 'https://drive.google.com/abc123' },
+    { figmaUrl: 'http://figma.com/x' },
+    { figmaUrl: 'https://figma.com.evil.io/x' },
+    { figmaUrl: null },
+    { repoUrl: 'https://gitlab.com/x' },
+  ]
+  for (const body of bad)
+    assert.equal((await patch(`/projects/${id}`, 'carla', body)).status, 400, JSON.stringify(body))
+
+  const before = (await get(`/projects/${id}`)).body
+  assert.deepEqual([before.repoUrl, before.figmaUrl], [null, null])
+  const r = await patch(`/projects/${id}`, 'bruno', { phase: 'DESIGN', figmaUrl })
+  assert.deepEqual([r.body.phase, r.body.figmaUrl], ['DESIGN', figmaUrl])
+  assert.ok(r.body.updatedAt > before.updatedAt, 'RN11')
+  assert.equal((await patch(`/projects/${id}`, 'ana', { repoUrl })).status, 403)
+  assert.equal((await patch(`/projects/${id}`, 'carla', { repoUrl })).body.repoUrl, repoUrl)
+
+  const perms = (as?: string) => get(`/projects/${id}`, as).then((x) => x.body.permissions)
+  assert.deepEqual(
+    [(await perms('ana')).edit, (await perms('ana')).editRepo, (await perms('ana')).complete],
+    [true, false, false],
+  )
+  assert.deepEqual([(await perms('carla')).editRepo, (await perms('carla')).complete], [true, true])
+  assert.equal((await perms()).edit, false)
+})
+
+test('team: edited as a whole by members or the professor, never empty', async () => {
+  const id = await newInProgress()
+  const url = `/projects/${id}/team`
+  const team = [
+    { email: users.ana.email, teamRole: 'Scrum Master' },
+    { email: users.outsider.email, teamRole: 'QA' },
+  ]
+  assert.equal((await put(url, 'outsider', { members: team })).status, 403)
+  assert.equal((await put(url, 'ana', { members: [] })).status, 400)
+  assert.equal(
+    (await put(url, 'ana', { members: [{ email: users.daniel.email, teamRole: 'QA' }] })).status,
+    400,
+    'not a student',
+  )
+
+  // e-mails only for who edits the team
+  assert.equal((await get(`/projects/${id}`, 'ana')).body.team[0].email, users.ana.email)
+  assert.equal((await get(`/projects/${id}`, 'outsider')).body.team[0].email, undefined)
+
+  const r = await put(url, 'carla', { members: team })
+  const roles = r.body.team.map((m: { id: string; teamRole: string }) => [m.id, m.teamRole])
+  assert.deepEqual(
+    roles.sort(),
+    [
+      [users.ana.id, 'Scrum Master'],
+      [users.outsider.id, 'QA'],
+    ].sort(),
+  )
+  // bruno left: no longer edits, outsider now does
+  assert.equal((await patch(`/projects/${id}`, 'bruno', { phase: 'DESIGN' })).status, 403)
+  assert.equal((await patch(`/projects/${id}`, 'outsider', { phase: 'DESIGN' })).status, 200)
+})
+
+test('attachments: team uploads, students, professors and the owner download, visitors never', async () => {
+  const id = await newInProgress()
+  assert.equal((await upload(id, undefined, 'req.pdf')).status, 401)
+  assert.equal((await upload(id, 'outsider', 'req.pdf')).status, 403)
+  assert.equal((await upload(id, 'ana', 'virus.exe')).status, 400)
+  assert.equal((await upload(id, 'ana', 'semextensao')).status, 400)
+  assert.equal((await upload(id, 'ana', 'req.pdf', '')).status, 400)
+  assert.equal((await upload(id, 'ana', 'big.zip', 'x'.repeat(20 * 1024 * 1024 + 1))).status, 413)
+
+  const r = await upload(id, 'ana', 'Requisitos.PDF', 'pdf da ana')
+  assert.equal(r.status, 201)
+  const [a] = r.body.attachments
+  assert.deepEqual(
+    [a.fileName, a.mimeType, a.size, a.category, a.uploadedBy.id, a.canDelete],
+    ['Requisitos.PDF', 'application/pdf', 10, 'REQUIREMENTS', users.ana.id, true],
+  )
+
+  const file = `/projects/${id}/attachments/${a.id}`
+  for (const as of ['partner', 'outsider', 'daniel']) {
+    const res = await fetch(base + file, {
+      headers: { authorization: `Bearer ${users[as].token}` },
+    })
+    assert.equal(res.status, 200, as)
+    assert.equal(await res.text(), 'pdf da ana')
+    assert.match(res.headers.get('content-disposition') ?? '', /Requisitos\.PDF/)
+  }
+  assert.equal((await fetch(base + file)).status, 401)
+  assert.equal((await get(`/projects/${id}`)).body.attachments, null)
+  assert.equal((await get(`/projects/${id}`, 'otherPartner')).body.attachments, null)
+  assert.equal((await get(file, 'otherPartner')).status, 404)
+  assert.equal((await get(`/projects/${id}/attachments/abc`, 'ana')).status, 404)
+
+  // only who uploaded or the responsible professor removes
+  assert.equal((await get(`/projects/${id}`, 'bruno')).body.attachments[0].canDelete, false)
+  assert.equal((await del(file, 'bruno')).status, 403)
+  assert.equal((await del(file, 'partner')).status, 403)
+  const second = (await upload(id, 'bruno', 'ata.docx')).body.attachments[1]
+  assert.equal((await del(file, 'carla')).status, 200)
+  assert.equal((await del(`/projects/${id}/attachments/${second.id}`, 'bruno')).status, 200)
+  assert.deepEqual(await readdir(process.env.UPLOAD_DIR as string), [], 'files removed')
+})
+
+test('complete: only the responsible professor, with both links; then read-only', async () => {
+  const id = await newInProgress()
+  assert.equal((await post(`/projects/${id}/complete`, 'ana')).status, 403)
+  assert.equal((await post(`/projects/${id}/complete`, 'daniel')).status, 403)
+  assert.equal((await post(`/projects/${id}/complete`, 'carla')).status, 409, 'no links')
+  await patch(`/projects/${id}`, 'carla', { repoUrl })
+  assert.equal((await post(`/projects/${id}/complete`, 'carla')).status, 409, 'no Figma')
+  await patch(`/projects/${id}`, 'ana', { figmaUrl, phase: 'VALIDATION' })
+  const attachment = (await upload(id, 'ana', 'final.pdf')).body.attachments[0]
+
+  const done = await post(`/projects/${id}/complete`, 'carla')
+  assert.deepEqual([done.body.status, done.body.phase], ['COMPLETED', null])
+  assert.equal(await inTab('completed', id), true)
+
+  // RN08
+  assert.equal((await patch(`/projects/${id}`, 'ana', { phase: 'DESIGN' })).status, 409)
+  assert.equal((await put(`/projects/${id}/team`, 'carla', { members: [] })).status, 400)
+  assert.equal(
+    (
+      await put(`/projects/${id}/team`, 'carla', {
+        members: [{ email: users.ana.email, teamRole: 'PO' }],
+      })
+    ).status,
+    409,
+  )
+  assert.equal((await upload(id, 'ana', 'tarde.pdf')).status, 409)
+  const file = `/projects/${id}/attachments/${attachment.id}`
+  assert.equal((await del(file, 'carla')).status, 409)
+  const download = await fetch(base + file, {
+    headers: { authorization: `Bearer ${users.partner.token}` },
+  })
+  assert.equal(download.status, 200, 'still downloadable')
+  assert.equal((await post(`/projects/${id}/complete`, 'carla')).status, 409)
+  assert.equal((await post(`/projects/${id}/cancel`, 'carla')).status, 409)
+})
+
+test('cancel in progress: only the responsible professor, with reason', async () => {
+  const id = await newInProgress()
+  for (const as of ['ana', 'partner', 'daniel'])
+    assert.equal((await post(`/projects/${id}/cancel`, as)).status, as === 'ana' ? 403 : 409, as)
+  const r = await post(`/projects/${id}/cancel`, 'carla', { reason: 'O parceiro saiu' })
+  assert.deepEqual(
+    [r.body.status, r.body.phase, r.body.statusReason],
+    ['CANCELED', null, 'O parceiro saiu'],
+  )
+  assert.equal((await get(`/projects/${id}`, 'ana')).status, 200, 'team still sees it')
+  assert.equal((await patch(`/projects/${id}`, 'ana', { phase: 'DESIGN' })).status, 409)
+})
+
+test('my projects: students where they are in the team, professors where responsible', async () => {
+  const awaiting = await newAwaiting()
+  const inProgress = await newInProgress()
+  const ids = (rows: { id: string }[]) => rows.map((p) => p.id)
+
+  const ana = (await get('/projects/mine', 'ana')).body
+  assert.ok(ids(ana).includes(awaiting) && ids(ana).includes(inProgress))
+  const row = ana.find((p: { id: string }) => p.id === inProgress)
+  assert.deepEqual(
+    [row.myRole, row.professor.id, row.status],
+    ['PO', users.carla.id, 'IN_PROGRESS'],
+  )
+
+  const carla = ids((await get('/projects/mine', 'carla')).body)
+  assert.ok(carla.includes(inProgress) && !carla.includes(awaiting), 'awaiting is in Pendências')
+  assert.ok(!ids((await get('/projects/mine', 'daniel')).body).includes(inProgress))
+  assert.ok(!ids((await get('/projects/mine', 'outsider')).body).includes(inProgress))
+  assert.equal((await get('/projects/mine')).status, 401)
 })

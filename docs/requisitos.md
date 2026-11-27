@@ -243,11 +243,10 @@ Quatro tabelas bastam, porque demanda e projeto são o mesmo registro. Os nomes 
 
 | Campo | Tipo | Observação |
 | --- | --- | --- |
-| id | UUID | Chave |
+| id | UUID | Chave; o arquivo fica no volume do Docker com este nome |
 | projectId | UUID → Project | Projeto |
 | uploadedById | UUID → User | Quem enviou |
 | fileName | String | Nome original |
-| storagePath | String | Caminho no volume do Docker |
 | mimeType | String | Tipo do arquivo |
 | size | Int | Tamanho em bytes |
 | category | AttachmentCategory | Categoria |
