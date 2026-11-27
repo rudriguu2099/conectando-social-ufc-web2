@@ -8,7 +8,7 @@ export default function AuthInput({ className, ...props }: AuthInputProps) {
   return (
     <Input
       className={cn(
-        'h-10 rounded-sm border-neutral-400 px-3 text-sm shadow-none',
+        'h-16 rounded-none border-neutral-500 px-4 text-lg shadow-none',
         'focus-visible:border-sky-800 focus-visible:ring-sky-800/20',
         className,
       )}

@@ -10,11 +10,14 @@ type AuthFieldProps = {
 
 export default function AuthField({ id, label, children, required = false }: AuthFieldProps) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm text-neutral-700">
+    <div className="auth-field relative">
+      <Label
+        htmlFor={id}
+        className="absolute -top-2 left-3 z-10 bg-white px-1 text-sm font-normal text-neutral-700"
+      >
         {label}
         {required && (
-          <span aria-hidden="true" className="text-destructive">
+          <span aria-hidden="true" className="text-neutral-700">
             *
           </span>
         )}

@@ -5,6 +5,7 @@ import EntrarPage from '@/pages/EntrarPage'
 import EsqueciSenhaPage from '@/pages/EsqueciSenhaPage'
 import HomePage from '@/pages/HomePage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import RedefinirSenhaPage from '@/pages/RedefinirSenhaPage'
 
 export const router = createBrowserRouter([
   { path: '/home', element: <HomePage /> },
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { index: true, element: <EntrarPage /> },
       { path: 'criar-conta', element: <CriarConta /> },
       { path: 'esqueci-senha', element: <EsqueciSenhaPage /> },
+      { path: 'redefinir-senha', element: <RedefinirSenhaPage /> },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

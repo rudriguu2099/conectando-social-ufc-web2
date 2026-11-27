@@ -31,3 +31,8 @@ export type PartnerSignupPayload = {
 }
 
 export type SignupPayload = StudentSignupPayload | PartnerSignupPayload
+
+export type ResetPasswordPayload = {
+  token: string
+  password: string
+}

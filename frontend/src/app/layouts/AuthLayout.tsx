@@ -7,16 +7,16 @@ export default function AuthLayout() {
   const isCreateAccount = pathname === '/criar-conta'
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="auth-layout min-h-screen bg-white">
       <div className="grid min-h-screen w-full grid-cols-[3fr_2fr] bg-white">
         <AuthBrandPanel />
         <section
           className={cn(
-            'flex justify-center bg-white px-12 py-16',
+            'flex justify-center bg-white px-[14%] py-16',
             isCreateAccount ? 'items-start' : 'items-center',
           )}
         >
-          <div className="w-full max-w-90">
+          <div className="w-full max-w-[460px]">
             <Outlet />
           </div>
         </section>
