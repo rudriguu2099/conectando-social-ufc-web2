@@ -1,3 +1,4 @@
+import type { AttachmentCategory, Phase } from '@prisma/client'
 import { invalid, optionalText, parseEmail, requiredText, text } from '../../lib/validation.ts'
 
 type Body = Record<string, unknown>
@@ -40,18 +41,22 @@ export type DemandInput = ReturnType<typeof parseDemand>
 
 export const parseReason = (b: Body) => optionalText(b.reason, 'Motivo', REASON_MAX)
 
-export function parseApplication(b: Body) {
-  const teamRole = requiredText(b.teamRole, 'Sua função', TEAM_ROLE_MAX)
-  const rawMembers = b.members ?? []
-  if (!Array.isArray(rawMembers)) throw invalid('Informe a lista de membros.')
-  if (rawMembers.length > MAX_TEAMMATES)
-    throw invalid(`A equipe pode ter até ${MAX_TEAMMATES + 1} pessoas.`)
-  const members = rawMembers.map((m: Body | null) => {
+function parseMembers(raw: unknown, max: number) {
+  if (!Array.isArray(raw)) throw invalid('Informe a lista de membros.')
+  if (raw.length > max) throw invalid(`A equipe pode ter até ${MAX_TEAMMATES + 1} pessoas.`)
+  const members = raw.map((m: Body | null) => {
     const email = parseEmail(m?.email)
     return { email, teamRole: requiredText(m?.teamRole, `Função de ${email}`, TEAM_ROLE_MAX) }
   })
   if (new Set(members.map((m) => m.email)).size !== members.length)
     throw invalid('Há um e-mail repetido na equipe.')
+  return members
+}
+export type MemberInput = ReturnType<typeof parseMembers>[number]
+
+export function parseApplication(b: Body) {
+  const teamRole = requiredText(b.teamRole, 'Sua função', TEAM_ROLE_MAX)
+  const members = parseMembers(b.members ?? [], MAX_TEAMMATES)
 
   const professorId = text(b.professorId)
   if (!UUID_RE.test(professorId)) throw invalid('Escolha o professor responsável.')
@@ -61,3 +66,70 @@ export function parseApplication(b: Body) {
   return { teamRole, members, professorId, discipline, semester }
 }
 export type ApplicationInput = ReturnType<typeof parseApplication>
+
+// flow 6
+
+export function parseTeam(b: Body) {
+  const members = parseMembers(b.members, MAX_TEAMMATES + 1)
+  if (!members.length) throw invalid('A equipe precisa de pelo menos um membro.')
+  return members
+}
+
+const PHASES = ['REQUIREMENTS', 'DESIGN', 'DEVELOPMENT', 'VALIDATION'] as const
+
+// RNF08: https only, on the right site
+function parseUrl(v: unknown, host: string) {
+  const value = text(v)
+  let url: URL | undefined
+  try {
+    url = new URL(value)
+  } catch {}
+  const hostOk = url?.hostname === host || url?.hostname === `www.${host}`
+  if (url?.protocol !== 'https:' || !hostOk || value.length > SHORT_MAX)
+    throw invalid(`O link precisa ser do ${host}.`)
+  return url.href
+}
+
+// only what was sent changes; links can be replaced but not cleared
+export function parseProjectUpdate(b: Body) {
+  const data: { phase?: Phase; figmaUrl?: string; repoUrl?: string } = {}
+  if (b.phase !== undefined) {
+    if (!PHASES.includes(b.phase as Phase)) throw invalid('Fase inválida.')
+    data.phase = b.phase as Phase
+  }
+  if (b.figmaUrl !== undefined) data.figmaUrl = parseUrl(b.figmaUrl, 'figma.com')
+  if (b.repoUrl !== undefined) data.repoUrl = parseUrl(b.repoUrl, 'github.com')
+  if (!Object.keys(data).length) throw invalid('Nada para alterar.')
+  return data
+}
+export type ProjectUpdate = ReturnType<typeof parseProjectUpdate>
+
+// RNF07
+export const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024
+const MIME_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  zip: 'application/zip',
+}
+const CATEGORIES = ['REQUIREMENTS', 'DESIGN', 'CODE', 'REPORT', 'OTHER'] as const
+
+export function parseAttachment(query: Body, body: unknown) {
+  const fileName = requiredText(query.fileName, 'Nome do arquivo', SHORT_MAX)
+  const extension = fileName.split('.').pop()?.toLowerCase() ?? ''
+  if (!Object.hasOwn(MIME_TYPES, extension) || !fileName.includes('.'))
+    throw invalid('Formato não aceito: use PDF, PNG, JPG, DOCX, XLSX ou ZIP.')
+  if (!CATEGORIES.includes(query.category as AttachmentCategory))
+    throw invalid('Escolha a categoria.')
+  if (!Buffer.isBuffer(body) || !body.length) throw invalid('Envie o arquivo.')
+  return {
+    fileName,
+    mimeType: MIME_TYPES[extension],
+    category: query.category as AttachmentCategory,
+    content: body,
+  }
+}
+export type AttachmentInput = ReturnType<typeof parseAttachment>

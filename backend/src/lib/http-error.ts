@@ -15,7 +15,9 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
   if (err instanceof HttpError)
     return res.status(err.status).set(err.headers).json({ error: err.message })
   // for malformed JSON, payload too large
-  const status = (err as { status?: number }).status
+  const { status, type } = err as { status?: number; type?: string }
+  if (type === 'entity.too.large')
+    return res.status(413).json({ error: 'O arquivo passa do limite de 20 MB.' })
   if (status && status < 500) return res.status(status).json({ error: 'Requisição inválida.' })
   console.error(err)
   res.status(500).json({ error: 'Erro interno. Tente de novo.' })

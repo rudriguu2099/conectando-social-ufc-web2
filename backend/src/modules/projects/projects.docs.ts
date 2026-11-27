@@ -33,8 +33,20 @@ const date = { type: 'string', format: 'date-time' }
 const person = { type: 'object', nullable: true, properties: { id, name: string } }
 const team = {
   type: 'array',
-  items: { type: 'object', properties: { id, name: string, teamRole: string } },
+  items: {
+    type: 'object',
+    properties: {
+      id,
+      name: string,
+      email: { ...string, description: 'Só para quem pode editar a equipe' },
+      teamRole: string,
+    },
+  },
 }
+const boolean = { type: 'boolean' }
+const notFound = error('Projeto não encontrado')
+const notInProgress = error('O projeto não está em andamento')
+const attachmentParam = { ...idParam, name: 'attachmentId' }
 const status = {
   type: 'string',
   enum: [
@@ -65,7 +77,12 @@ const card = {
 }
 
 export const projectsDocs = {
-  tags: [{ name: 'Projects', description: 'Vitrine, demandas e candidaturas (fluxos 3, 4 e 5)' }],
+  tags: [
+    {
+      name: 'Projects',
+      description: 'Vitrine, demandas, candidaturas, andamento e conclusão (fluxos 3 a 6)',
+    },
+  ],
   schemas: {
     ProjectCard: { type: 'object', properties: card },
     MyDemand: {
@@ -75,6 +92,31 @@ export const projectsDocs = {
         statusReason: nullable,
         professor: person,
         teamSize: { type: 'integer' },
+      },
+    },
+    MyProject: {
+      type: 'object',
+      description:
+        'Aluno: projetos em que está na equipe. Professor: projetos de que é responsável',
+      properties: {
+        ...card,
+        statusReason: nullable,
+        appliedAt: date,
+        professor: person,
+        myRole: { ...nullable, description: 'Função do aluno; null para professor' },
+      },
+    },
+    Attachment: {
+      type: 'object',
+      properties: {
+        id,
+        fileName: string,
+        mimeType: string,
+        size: { type: 'integer', description: 'Bytes' },
+        category: { type: 'string', enum: ['REQUIREMENTS', 'DESIGN', 'CODE', 'REPORT', 'OTHER'] },
+        createdAt: date,
+        uploadedBy: person,
+        canDelete: boolean,
       },
     },
     PendingApplication: {
@@ -121,15 +163,27 @@ export const projectsDocs = {
             team,
           },
         },
+        attachments: {
+          type: 'array',
+          nullable: true,
+          description: 'Só para alunos, professores e o parceiro dono; null para os demais',
+          items: ref('Attachment'),
+        },
         permissions: {
           type: 'object',
           description:
             'O que o usuário atual pode fazer agora: use para mostrar ou esconder os botões',
           properties: {
-            review: { type: 'boolean' },
-            apply: { type: 'boolean' },
-            reviewApplication: { type: 'boolean' },
-            cancel: { type: 'boolean' },
+            review: boolean,
+            apply: boolean,
+            reviewApplication: boolean,
+            cancel: boolean,
+            edit: { ...boolean, description: 'Fase, Figma, anexos e equipe' },
+            editRepo: boolean,
+            complete: {
+              ...boolean,
+              description: 'Também exige repoUrl e figmaUrl preenchidos',
+            },
           },
         },
       },
@@ -212,12 +266,13 @@ export const projectsDocs = {
     '/api/projects/mine': {
       get: {
         tags: ['Projects'],
-        summary: 'Minhas demandas (parceiro)',
+        summary: 'Minhas demandas (parceiro) ou Meus projetos (aluno e professor)',
         security,
         responses: {
-          200: ok('Demandas em qualquer status', list('MyDemand')),
+          200: ok('Parceiro recebe MyDemand[]; aluno e professor, MyProject[]', {
+            oneOf: [list('MyDemand'), list('MyProject')],
+          }),
           401: unauthorized,
-          403: error('Só parceiro'),
         },
       },
     },
@@ -250,6 +305,148 @@ export const projectsDocs = {
           200: ok('Projeto', ref('Project')),
           401: error('Token enviado, mas vencido ou inválido'),
           404: error('Projeto não encontrado'),
+        },
+      },
+      patch: {
+        tags: ['Projects'],
+        summary: 'Muda fase e links (equipe e professor responsável)',
+        description:
+          'Só muda o que for enviado. `repoUrl` é só do professor responsável. Links podem ser trocados, não apagados.',
+        security,
+        parameters: [idParam],
+        requestBody: {
+          required: true,
+          content: json({
+            type: 'object',
+            properties: {
+              phase: { ...phase, nullable: false, enum: phase.enum.slice(0, 4) },
+              figmaUrl: { type: 'string', example: 'https://www.figma.com/design/abc/estoque' },
+              repoUrl: { type: 'string', example: 'https://github.com/carla/estoque' },
+            },
+          }),
+        },
+        responses: {
+          200: project,
+          400: error('Fase inválida, link fora do figma.com/github.com ou nada para alterar'),
+          401: unauthorized,
+          403: error('Fora da equipe, ou repositório sem ser o professor responsável'),
+          404: notFound,
+          409: notInProgress,
+        },
+      },
+    },
+    '/api/projects/{id}/team': {
+      put: {
+        tags: ['Projects'],
+        summary: 'Substitui a equipe inteira (equipe e professor responsável)',
+        security,
+        parameters: [idParam],
+        requestBody: {
+          required: true,
+          content: json({
+            type: 'object',
+            properties: {
+              members: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 20,
+                items: {
+                  type: 'object',
+                  properties: {
+                    email: { type: 'string', format: 'email' },
+                    teamRole: { type: 'string', maxLength: 60 },
+                  },
+                },
+              },
+            },
+          }),
+        },
+        responses: {
+          200: project,
+          400: error('Equipe vazia, e-mail repetido ou sem conta de aluno'),
+          401: unauthorized,
+          403: error('Fora da equipe'),
+          404: notFound,
+          409: notInProgress,
+        },
+      },
+    },
+    '/api/projects/{id}/complete': {
+      post: {
+        tags: ['Projects'],
+        summary: 'Conclui o projeto (professor responsável)',
+        security,
+        parameters: [idParam],
+        responses: {
+          200: project,
+          401: unauthorized,
+          403: error('Só o professor responsável'),
+          404: notFound,
+          409: error('Não está em andamento, ou falta o link do repositório ou do Figma'),
+        },
+      },
+    },
+    '/api/projects/{id}/attachments': {
+      post: {
+        tags: ['Projects'],
+        summary: 'Envia um anexo (equipe e professor responsável)',
+        description:
+          'O arquivo vai cru no corpo (`fetch(url, { method: "POST", body: file })`). PDF, PNG, JPG, DOCX, XLSX ou ZIP, até 20 MB.',
+        security,
+        parameters: [
+          idParam,
+          { name: 'fileName', in: 'query', required: true, schema: { type: 'string' } },
+          {
+            name: 'category',
+            in: 'query',
+            required: true,
+            schema: { type: 'string', enum: ['REQUIREMENTS', 'DESIGN', 'CODE', 'REPORT', 'OTHER'] },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+        },
+        responses: {
+          201: ok('Projeto com o anexo', ref('Project')),
+          400: error('Formato não aceito, sem categoria ou arquivo vazio'),
+          401: unauthorized,
+          403: error('Fora da equipe'),
+          404: notFound,
+          409: notInProgress,
+          413: error('Arquivo maior que 20 MB'),
+        },
+      },
+    },
+    '/api/projects/{id}/attachments/{attachmentId}': {
+      get: {
+        tags: ['Projects'],
+        summary: 'Baixa um anexo (alunos, professores e o parceiro dono)',
+        description: 'Exige o token: no front, baixe com fetch e abra o blob.',
+        security,
+        parameters: [idParam, attachmentParam],
+        responses: {
+          200: {
+            description: 'O arquivo',
+            content: {
+              'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+            },
+          },
+          401: unauthorized,
+          404: error('Projeto ou anexo não encontrado'),
+        },
+      },
+      delete: {
+        tags: ['Projects'],
+        summary: 'Remove um anexo (quem enviou ou o professor responsável)',
+        security,
+        parameters: [idParam, attachmentParam],
+        responses: {
+          200: project,
+          401: unauthorized,
+          403: error('Sem permissão'),
+          404: error('Projeto ou anexo não encontrado'),
+          409: notInProgress,
         },
       },
     },
@@ -288,9 +485,9 @@ export const projectsDocs = {
     '/api/projects/{id}/cancel': {
       post: {
         tags: ['Projects'],
-        summary: 'Cancela uma demanda que ainda não começou',
+        summary: 'Cancela uma demanda ou um projeto em andamento',
         description:
-          'Parceiro dono: Em análise ou Disponível. Professor: só Disponível. Cancelar projeto Em andamento é do fluxo 6.',
+          'Parceiro dono: Em análise ou Disponível. Qualquer professor: Disponível. Professor responsável: também Em andamento.',
         security,
         parameters: [idParam],
         requestBody: reasonBody,

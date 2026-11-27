@@ -1,3 +1,5 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import type { Prisma, ProjectStatus } from '@prisma/client'
 import { HttpError } from '../../lib/http-error.ts'
 import { prisma } from '../../lib/prisma.ts'
@@ -5,7 +7,10 @@ import type { Viewer } from './projects.policy.ts'
 import * as policy from './projects.policy.ts'
 import {
   type ApplicationInput,
+  type AttachmentInput,
   type DemandInput,
+  type MemberInput,
+  type ProjectUpdate,
   TABS,
   type Tab,
   UUID_RE,
@@ -47,8 +52,13 @@ export async function list(tab: Tab) {
   return projects.map(toCard)
 }
 
-// the partner's own demands, in any status
-export async function listMine(user: LoggedUser) {
+// partner: own demands in any status. Student: projects they are in. Professor: projects they are responsible for
+export function listMine(user: LoggedUser) {
+  if (user.role === 'PARTNER') return listDemands(user)
+  return listParticipations(user)
+}
+
+async function listDemands(user: LoggedUser) {
   const projects = await prisma.project.findMany({
     where: { partnerId: user.id },
     select: {
@@ -68,6 +78,32 @@ export async function listMine(user: LoggedUser) {
       teamSize: hasTeam ? _count.members : 0,
     }
   })
+}
+
+async function listParticipations(user: LoggedUser) {
+  const where: Prisma.ProjectWhereInput =
+    user.role === 'STUDENT'
+      ? { members: { some: { userId: user.id } } }
+      : { professorId: user.id, status: { not: 'AWAITING_APPROVAL' } }
+  const projects = await prisma.project.findMany({
+    where,
+    select: {
+      ...cardSelect,
+      statusReason: true,
+      appliedAt: true,
+      professor: person,
+      members: { where: { userId: user.id }, select: { teamRole: true } },
+    },
+    orderBy: { updatedAt: 'desc' },
+  })
+  return projects.map(({ professor, members, statusReason, appliedAt, ...p }) => ({
+    ...toCard(p),
+    semester: p.semester,
+    statusReason,
+    appliedAt,
+    professor,
+    myRole: members[0]?.teamRole ?? null,
+  }))
 }
 
 // what waits for this professor: every demand in review + the applications that indicate them
@@ -111,7 +147,22 @@ const detailInclude = {
   },
   professor: person,
   applicant: person,
-  members: { include: { user: person }, orderBy: { id: 'asc' } },
+  members: {
+    include: { user: { select: { id: true, name: true, email: true } } },
+    orderBy: { id: 'asc' },
+  },
+  attachments: {
+    select: {
+      id: true,
+      fileName: true,
+      mimeType: true,
+      size: true,
+      category: true,
+      createdAt: true,
+      uploadedBy: person,
+    },
+    orderBy: { createdAt: 'asc' },
+  },
 } satisfies Prisma.ProjectInclude
 
 // hidden projects answer 404, so nobody finds out they exist
@@ -129,7 +180,13 @@ export async function getById(id: string, viewer: Viewer) {
   const { partner } = p
   const contactVisible = policy.canSeeContact(p, viewer)
   const awaiting = p.status === 'AWAITING_APPROVAL'
-  const team = p.members.map((m) => ({ ...m.user, teamRole: m.teamRole }))
+  const editable = policy.permissionsFor(p, viewer).edit
+  // the e-mail is what PUT /team takes, so only who edits the team sees it
+  const team = p.members.map(({ user: { email, ...user }, teamRole }) => ({
+    ...user,
+    ...(editable && { email }),
+    teamRole,
+  }))
   const assignment = { professor: p.professor, discipline: p.discipline, semester: p.semester }
 
   return {
@@ -159,6 +216,10 @@ export async function getById(id: string, viewer: Viewer) {
       : null,
     availability: contactVisible ? p.availability : null,
     currentSituation: contactVisible ? p.currentSituation : null,
+    // null = not for this viewer (RN09)
+    attachments: policy.canSeeAttachments(p, viewer)
+      ? p.attachments.map((a) => ({ ...a, canDelete: canDeleteAttachment(p, a, viewer) }))
+      : null,
     permissions: policy.permissionsFor(p, viewer),
   }
 }
@@ -203,11 +264,11 @@ export const rejectDemand = (id: string, reason: string | null, user: LoggedUser
   changeStatus('review', id, user, { status: 'REJECTED', statusReason: reason })
 
 export const cancelDemand = (id: string, reason: string | null, user: LoggedUser) =>
-  changeStatus('cancel', id, user, { status: 'CANCELED', statusReason: reason })
+  changeStatus('cancel', id, user, { status: 'CANCELED', statusReason: reason, phase: null })
 
 // application
 
-async function resolveTeam({ members }: ApplicationInput, user: LoggedUser) {
+async function resolveTeam(members: MemberInput[]) {
   const students = await prisma.user.findMany({
     where: { email: { in: members.map((m) => m.email) }, role: 'STUDENT' },
     select: { id: true, email: true },
@@ -220,8 +281,6 @@ async function resolveTeam({ members }: ApplicationInput, user: LoggedUser) {
     userId: idByEmail.get(m.email) as string,
     teamRole: m.teamRole,
   }))
-  if (team.some((m) => m.userId === user.id))
-    throw new HttpError(400, 'Você já faz parte da equipe: informe só os colegas.')
   return team
 }
 
@@ -229,7 +288,9 @@ export async function apply(id: string, input: ApplicationInput, user: LoggedUse
   const project = await findVisible(id, user)
   policy.assertCan('apply', project, user)
 
-  const teammates = await resolveTeam(input, user)
+  const teammates = await resolveTeam(input.members)
+  if (teammates.some((m) => m.userId === user.id))
+    throw new HttpError(400, 'Você já faz parte da equipe: informe só os colegas.')
   const professor = await prisma.user.findFirst({
     where: { id: input.professorId, role: 'PROFESSOR' },
   })
@@ -272,5 +333,106 @@ export async function rejectApplication(id: string, user: LoggedUser) {
     })
     await db.projectMember.deleteMany({ where: { projectId: id } })
   })
+  return getById(id, user)
+}
+
+// progress (flow 6)
+
+// every change to a project in progress repeats the status in the write, so it fails with 409 if it was just completed or canceled
+async function touchInProgress(
+  db: Db,
+  id: string,
+  data: Prisma.ProjectUpdateManyMutationInput = {},
+) {
+  const { count } = await db.project.updateMany({
+    where: { id, status: 'IN_PROGRESS' },
+    data: { ...data, updatedAt: new Date() },
+  })
+  if (!count) throw policy.conflict('edit')
+}
+
+export async function updateProject(id: string, data: ProjectUpdate, user: LoggedUser) {
+  const project = await findVisible(id, user)
+  policy.assertCan(data.repoUrl === undefined ? 'edit' : 'editRepo', project, user)
+  await touchInProgress(prisma, id, data)
+  return getById(id, user)
+}
+
+export async function replaceTeam(id: string, members: MemberInput[], user: LoggedUser) {
+  const project = await findVisible(id, user)
+  policy.assertCan('edit', project, user)
+  const team = await resolveTeam(members)
+  await prisma.$transaction(async (db) => {
+    await touchInProgress(db, id)
+    await db.projectMember.deleteMany({ where: { projectId: id } })
+    await db.projectMember.createMany({ data: team.map((m) => ({ ...m, projectId: id })) })
+  })
+  return getById(id, user)
+}
+
+export async function completeProject(id: string, user: LoggedUser) {
+  const project = await findVisible(id, user)
+  policy.assertCan('complete', project, user)
+  if (!project.repoUrl || !project.figmaUrl)
+    throw new HttpError(409, 'Registre os links do repositório e do Figma antes de concluir.')
+  await transition(prisma, 'complete', project, { status: 'COMPLETED', phase: null })
+  return getById(id, user)
+}
+
+// attachments (RF17)
+
+const uploadDir = () => process.env.UPLOAD_DIR || 'uploads'
+const filePath = (attachmentId: string) => path.join(uploadDir(), attachmentId)
+
+function canDeleteAttachment(
+  p: Parameters<typeof policy.permissionsFor>[0],
+  a: { uploadedBy: { id: string } },
+  viewer: Viewer,
+) {
+  if (!policy.permissionsFor(p, viewer).edit) return false
+  return a.uploadedBy.id === viewer?.id || policy.isResponsible(p, viewer)
+}
+
+export async function addAttachment(id: string, input: AttachmentInput, user: LoggedUser) {
+  const project = await findVisible(id, user)
+  policy.assertCan('edit', project, user)
+  const { content, ...data } = input
+  await mkdir(uploadDir(), { recursive: true })
+  await prisma.$transaction(async (db) => {
+    await touchInProgress(db, id)
+    const attachment = await db.attachment.create({
+      data: { ...data, size: content.length, projectId: id, uploadedById: user.id },
+    })
+    // last, so a failed write rolls the row back
+    await writeFile(filePath(attachment.id), content)
+  })
+  return getById(id, user)
+}
+
+async function findAttachment(id: string, attachmentId: string, viewer: Viewer) {
+  const project = await findVisible(id, viewer)
+  const attachment = UUID_RE.test(attachmentId)
+    ? project.attachments.find((a) => a.id === attachmentId)
+    : undefined
+  if (!policy.canSeeAttachments(project, viewer) || !attachment)
+    throw new HttpError(404, 'Anexo não encontrado.')
+  return { project, attachment }
+}
+
+export async function getAttachmentFile(id: string, attachmentId: string, viewer: Viewer) {
+  const { attachment } = await findAttachment(id, attachmentId, viewer)
+  return { path: path.resolve(filePath(attachment.id)), fileName: attachment.fileName }
+}
+
+export async function removeAttachment(id: string, attachmentId: string, user: LoggedUser) {
+  const { project, attachment } = await findAttachment(id, attachmentId, user)
+  policy.assertCan('edit', project, user)
+  if (!canDeleteAttachment(project, attachment, user))
+    throw new HttpError(403, 'Só quem enviou ou o professor responsável remove o anexo.')
+  await prisma.$transaction(async (db) => {
+    await touchInProgress(db, id)
+    await db.attachment.delete({ where: { id: attachmentId } })
+  })
+  await rm(filePath(attachment.id), { force: true })
   return getById(id, user)
 }
