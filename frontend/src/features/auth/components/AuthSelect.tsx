@@ -3,11 +3,7 @@ import { cn } from '@/lib/utils'
 
 type AuthSelectProps = ComponentProps<'select'>
 
-export default function AuthSelect({
-  className,
-  children,
-  ...props
-}: AuthSelectProps) {
+export default function AuthSelect({ className, children, ...props }: AuthSelectProps) {
   return (
     <select
       className={cn(

@@ -4,7 +4,8 @@
 import { prisma } from '../src/lib/prisma.ts'
 import { hashPassword } from '../src/modules/auth/password.ts'
 
-const [name = 'Prof. Carla Mendes', rawEmail = 'carla@ufc.br', password = 'senha1234'] = process.argv.slice(2)
+const [name = 'Prof. Carla Mendes', rawEmail = 'carla@ufc.br', password = 'senha1234'] =
+  process.argv.slice(2)
 const email = rawEmail.trim().toLowerCase()
 if (password.length < 8) throw new Error('A senha precisa ter pelo menos 8 caracteres.')
 

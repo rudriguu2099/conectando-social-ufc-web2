@@ -15,7 +15,8 @@ export function blockedFor(key: string) {
 
 export function recordFailure(key: string) {
   const now = Date.now()
-  if (failures.size > 10_000) for (const [k, f] of failures) if (f.resetAt <= now) failures.delete(k)
+  if (failures.size > 10_000)
+    for (const [k, f] of failures) if (f.resetAt <= now) failures.delete(k)
   const f = failures.get(key)
   if (!f || f.resetAt <= now) failures.set(key, { count: 1, resetAt: now + WINDOW_MS })
   else f.count++

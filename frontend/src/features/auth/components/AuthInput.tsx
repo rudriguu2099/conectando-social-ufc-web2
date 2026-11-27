@@ -1,13 +1,10 @@
 import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 type AuthInputProps = ComponentProps<typeof Input>
 
-export default function AuthInput({
-  className,
-  ...props
-}: AuthInputProps) {
+export default function AuthInput({ className, ...props }: AuthInputProps) {
   return (
     <Input
       className={cn(

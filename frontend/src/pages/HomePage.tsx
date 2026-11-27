@@ -1,6 +1,6 @@
+import { ArrowLeft, Info, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Info, Users } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -62,9 +62,7 @@ export default function HomePage() {
           Vitrine
         </Link>
 
-        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-sky-800">
-          Disponível
-        </p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-sky-800">Disponível</p>
         <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
           Site para divulgar as oficinas da Associação Vida Nova
         </h1>
@@ -81,8 +79,8 @@ export default function HomePage() {
               <div>
                 <dt className="font-semibold">Qual é o problema</dt>
                 <dd className="text-slate-800">
-                  As oficinas de artesanato e de reforço escolar são só divulgadas no boca a
-                  boca, e muitas vagas ficam vazias.
+                  As oficinas de artesanato e de reforço escolar são só divulgadas no boca a boca, e
+                  muitas vagas ficam vazias.
                 </dd>
               </div>
               <div>
@@ -114,28 +112,20 @@ export default function HomePage() {
                 </div>
                 <div className="text-sm">
                   <p className="font-medium">Maria Souza</p>
-                  <p className="text-xs text-slate-500">
-                    maria@vidanova.org · (85) 90000-0000
-                  </p>
+                  <p className="text-xs text-slate-500">maria@vidanova.org · (85) 90000-0000</p>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-slate-500">
-                Visível só para alunos e professores.
-              </p>
+              <p className="mt-3 text-xs text-slate-500">Visível só para alunos e professores.</p>
             </div>
           </section>
 
           <aside className="rounded-md border border-slate-200 p-5">
             <h2 className="text-sm font-semibold">Equipe</h2>
-            <p className="mt-3 text-sm text-slate-600">
-              Este projeto ainda não tem equipe.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">Este projeto ainda não tem equipe.</p>
 
             <div className="mt-4 flex gap-3 bg-slate-100 p-3 font-sans text-sm leading-5 text-slate-800">
               <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-              <p>
-                Para assumir este projeto, monte uma equipe e indique o professor responsável.
-              </p>
+              <p>Para assumir este projeto, monte uma equipe e indique o professor responsável.</p>
             </div>
 
             <Button

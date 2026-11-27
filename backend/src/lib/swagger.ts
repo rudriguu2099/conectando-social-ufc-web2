@@ -1,7 +1,8 @@
 import { authDocs } from '../modules/auth/auth.docs.ts'
+import { projectsDocs } from '../modules/projects/projects.docs.ts'
 import { usersDocs } from '../modules/users/users.docs.ts'
 
-const modules = [authDocs, usersDocs]
+const modules = [authDocs, usersDocs, projectsDocs]
 
 export const openApiSpec = {
   openapi: '3.0.3',
@@ -12,7 +13,10 @@ export const openApiSpec = {
     securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } },
     schemas: Object.assign(
       {
-        Error: { type: 'object', properties: { error: { type: 'string', example: 'Mensagem para o usuário.' } } },
+        Error: {
+          type: 'object',
+          properties: { error: { type: 'string', example: 'Mensagem para o usuário.' } },
+        },
       },
       ...modules.map((m) => m.schemas),
     ),

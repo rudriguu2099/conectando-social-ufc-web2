@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import {
-  getLoginErrorMessage,
-  login,
-} from '@/features/auth/auth.service'
+import { getLoginErrorMessage, login } from '@/features/auth/auth.service'
 import type { LoginPayload } from '@/features/auth/types'
 
 const formEntrarSchema = z.object({
@@ -24,10 +21,7 @@ export function useFormEntrar() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  function updateField<K extends keyof LoginPayload>(
-    field: K,
-    value: LoginPayload[K],
-  ) {
+  function updateField<K extends keyof LoginPayload>(field: K, value: LoginPayload[K]) {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -36,10 +30,7 @@ export function useFormEntrar() {
     if (!result.success) {
       setErrors(
         Object.fromEntries(
-          result.error.issues.map((issue) => [
-            issue.path.join('.'),
-            issue.message,
-          ]),
+          result.error.issues.map((issue) => [issue.path.join('.'), issue.message]),
         ),
       )
       return

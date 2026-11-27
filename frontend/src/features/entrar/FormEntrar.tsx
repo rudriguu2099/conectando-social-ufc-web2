@@ -7,14 +7,7 @@ import AuthPasswordInput from '@/features/auth/components/AuthPasswordInput'
 import { useFormEntrar } from './useFormEntrar'
 
 export default function FormEntrar() {
-  const {
-    form,
-    errors,
-    isSubmitting,
-    submitError,
-    updateField,
-    handleSubmit,
-  } = useFormEntrar()
+  const { form, errors, isSubmitting, submitError, updateField, handleSubmit } = useFormEntrar()
 
   return (
     <form className="space-y-3" action={handleSubmit}>

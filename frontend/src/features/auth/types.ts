@@ -30,6 +30,4 @@ export type PartnerSignupPayload = {
   termsAccepted: true
 }
 
-export type SignupPayload =
-  | StudentSignupPayload
-  | PartnerSignupPayload
+export type SignupPayload = StudentSignupPayload | PartnerSignupPayload

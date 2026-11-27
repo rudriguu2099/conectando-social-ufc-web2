@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
-import { signup, getSignupErrorMessage } from '@/features/auth/auth.service'
+import { getSignupErrorMessage, signup } from '@/features/auth/auth.service'
 import { CURSOS, type FormAlunoData } from './types'
 
 const formAlunoSchema = z.object({
@@ -28,10 +28,7 @@ export function useFormAluno() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  function updateField<K extends keyof FormAlunoData>(
-    field: K,
-    value: FormAlunoData[K],
-  ) {
+  function updateField<K extends keyof FormAlunoData>(field: K, value: FormAlunoData[K]) {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
@@ -40,10 +37,7 @@ export function useFormAluno() {
     if (!result.success) {
       setErrors(
         Object.fromEntries(
-          result.error.issues.map((issue) => [
-            issue.path.join('.'),
-            issue.message,
-          ]),
+          result.error.issues.map((issue) => [issue.path.join('.'), issue.message]),
         ),
       )
       return
@@ -56,7 +50,7 @@ export function useFormAluno() {
 
     try {
       await signup(result.data)
-      navigate('/home');
+      navigate('/home')
     } catch (error) {
       setSubmitError(getSignupErrorMessage(error))
     } finally {
